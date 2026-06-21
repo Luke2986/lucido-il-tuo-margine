@@ -1,5 +1,5 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LineChart, Database, ShieldCheck, Settings, LogOut } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { LineChart, Database, ShieldCheck, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,9 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useLucidoStore } from "@/lib/store";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
 
 type NavItem = {
   title: string;
@@ -37,28 +34,14 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const navigate = useNavigate();
   const role = useLucidoStore((s) => s.role);
   const company = useLucidoStore((s) => s.company);
-  const userId = useLucidoStore((s) => s.userId);
-  const [email, setEmail] = useState<string>("");
-
-  useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
-  }, [userId]);
 
   // Il titolare vede solo la schermata margine.
   const items = role === "owner"
     ? allItems.filter((i) => i.group === "Titolare")
     : allItems;
   const groups = role === "owner" ? ["Titolare"] : ["Titolare", "Operatore"];
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    useLucidoStore.getState().reset();
-    toast.success("Sei uscito");
-    navigate({ to: "/auth" });
-  };
 
   const roleLabel = role === "owner" ? "Titolare" : role === "operator" ? "Operatore" : "—";
 
