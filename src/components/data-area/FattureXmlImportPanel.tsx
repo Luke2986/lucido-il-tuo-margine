@@ -24,9 +24,10 @@ interface ParsedRow {
   counterparty: string;
   counterpartyVat: string;
   description: string;
-  amount: number; // netto (può essere negativo per TD04)
-  direction: EntryDirection | null; // null = da decidere
+  amount: number; // netto positivo (IVA esclusa)
+  direction: EntryDirection | null; // null = da decidere; per TD04 è già invertita
   detectedFromVat: boolean;
+  isCreditNote: boolean; // TD04: nota di credito (direzione invertita)
   clientId?: string;
   include: boolean;
 }
@@ -138,18 +139,14 @@ export function FattureXmlImportPanel() {
     // Applica direzione di override se mancante
     const built: Omit<Entry, "id">[] = toImport.map((r) => {
       const direction: EntryDirection = r.direction ?? overrideDirection;
-      const signedAmount = r.amount;
       return {
         date: r.date,
         description: r.description || `Fattura n. ${r.invoiceNumber}`,
         counterparty: r.counterparty,
-        amount: Math.abs(signedAmount),
+        amount: Math.abs(r.amount),
+        // TD04 (nota di credito): la direzione è già invertita in fase di parsing,
+        // l'importo resta positivo (es. nota di credito su un costo → conta come ricavo).
         direction,
-        // Se TD04 (nota di credito) → l'importo "logico" è invertito.
-        // Manteniamo amount positivo; la direzione resta quella del documento
-        // originale ma con il segno applicato lato dashboard non è gestito qui:
-        // approccio pragmatico — invertiamo la direction per le note di credito.
-        // (Vedi mapping sotto)
         costType: undefined,
         clientId: r.clientId,
         source: "fattura",
@@ -290,6 +287,9 @@ export function FattureXmlImportPanel() {
                             </Select>
                             {!r.detectedFromVat && (
                               <div className="text-[10px] text-warning">manuale</div>
+                            )}
+                            {r.isCreditNote && (
+                              <div className="text-[10px] text-warning">nota credito (segno invertito)</div>
                             )}
                           </Td>
                           <Td>
@@ -482,8 +482,9 @@ function parseFatturaPA(doc: Document, fileName: string, companyVat: string): Pa
     const date = textOf(datiGen, "Data");
     const invoiceNumber = textOf(datiGen, "Numero");
     const tipoDocumento = textOf(datiGen, "TipoDocumento");
+    const isCreditNote = tipoDocumento === "TD04";
 
-    // Imponibile = somma di ImponibileImporto in DatiRiepilogo
+    // Imponibile = somma di ImponibileImporto in DatiRiepilogo (sempre positivo, IVA esclusa)
     const riepiloghi = findAll(body, "DatiRiepilogo");
     let imponibile = 0;
     for (const r of riepiloghi) {
@@ -491,17 +492,20 @@ function parseFatturaPA(doc: Document, fileName: string, companyVat: string): Pa
       const n = Number(v.replace(",", "."));
       if (!isNaN(n)) imponibile += n;
     }
-    // Fallback: ImportoTotaleDocumento meno IVA (se nessun riepilogo)
+    // Fallback: ImportoTotaleDocumento (se nessun riepilogo)
     if (imponibile === 0) {
       const tot = Number(textOf(datiGen, "ImportoTotaleDocumento").replace(",", ".")) || 0;
       imponibile = tot;
     }
+    imponibile = Math.abs(imponibile);
 
-    // Nota di credito: inverti segno
-    if (tipoDocumento === "TD04") imponibile = -imponibile;
+    // Nota di credito (TD04): non si nega l'importo, si INVERTE la direzione economica.
+    // Es. nota di credito su una fattura passiva (costo) → riduce i costi → conta come ricavo.
+    const effectiveDirection: EntryDirection | null =
+      isCreditNote && direction ? (direction === "costo" ? "ricavo" : "costo") : direction;
 
     const firstDesc = textOf(body, "Descrizione");
-    const description = `Fattura n. ${invoiceNumber}${firstDesc ? ` — ${firstDesc}` : ""}`;
+    const description = `${isCreditNote ? "Nota di credito" : "Fattura"} n. ${invoiceNumber}${firstDesc ? ` — ${firstDesc}` : ""}`;
 
     out.push({
       uid: `${fileName}-${invoiceNumber}-${out.length}`,
@@ -513,8 +517,9 @@ function parseFatturaPA(doc: Document, fileName: string, companyVat: string): Pa
       counterpartyVat,
       description,
       amount: imponibile,
-      direction,
+      direction: effectiveDirection,
       detectedFromVat,
+      isCreditNote,
       include: true,
     });
   }
