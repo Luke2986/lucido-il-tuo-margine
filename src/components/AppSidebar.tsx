@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LineChart, Inbox, ShieldCheck, Settings } from "lucide-react";
+import { LineChart, Database, ShieldCheck, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,16 +15,18 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Margine clienti", url: "/", icon: LineChart, enabled: true },
-  { title: "Importazioni", url: "/importazioni", icon: Inbox, enabled: false },
-  { title: "Revisione AI", url: "/revisione", icon: ShieldCheck, enabled: false },
-  { title: "Impostazioni", url: "/impostazioni", icon: Settings, enabled: false },
+  { title: "Margine clienti", url: "/", icon: LineChart, enabled: true, group: "Titolare" },
+  { title: "Area dati", url: "/area-dati", icon: Database, enabled: true, group: "Operatore" },
+  { title: "Revisione AI", url: "/revisione", icon: ShieldCheck, enabled: false, group: "Operatore" },
+  { title: "Impostazioni", url: "/impostazioni", icon: Settings, enabled: false, group: "Operatore" },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+
+  const groups = ["Titolare", "Operatore"];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -43,47 +45,49 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Area titolare</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = currentPath === item.url;
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild={item.enabled}
-                      isActive={isActive}
-                      disabled={!item.enabled}
-                      tooltip={item.title}
-                      className={item.enabled ? "" : "opacity-50 cursor-not-allowed"}
-                    >
-                      {item.enabled ? (
-                        <Link to={item.url} className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </Link>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {!collapsed && (
-                            <span className="flex-1">
-                              {item.title}
-                              <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                                presto
+        {groups.map((g) => (
+          <SidebarGroup key={g}>
+            {!collapsed && <SidebarGroupLabel>{g}</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navItems.filter((i) => i.group === g).map((item) => {
+                  const isActive = currentPath === item.url;
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild={item.enabled}
+                        isActive={isActive}
+                        disabled={!item.enabled}
+                        tooltip={item.title}
+                        className={item.enabled ? "" : "opacity-50 cursor-not-allowed"}
+                      >
+                        {item.enabled ? (
+                          <Link to={item.url} className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            {!collapsed && (
+                              <span className="flex-1">
+                                {item.title}
+                                <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                  presto
+                                </span>
                               </span>
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                            )}
+                          </div>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border">

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { ChevronRight, TrendingDown, TrendingUp, ShieldCheck, AlertCircle, FileText, Landmark, Sparkles, User } from "lucide-react";
+import { useMemo } from "react";
+import { ChevronRight, TrendingDown, TrendingUp, ShieldCheck, AlertCircle, FileText, Landmark, Sparkles, User, Pencil } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -9,15 +10,24 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { computeRows, mockReport, type MarginRow, type ConfidenceBand } from "@/lib/mock-margins";
+import { useLucidoStore, computeMarginRows, computeValidatedRevenueShare } from "@/lib/store";
+import { useHydratedStore } from "@/lib/use-store";
+import type { MarginRow, ConfidenceBand, Entry } from "@/lib/types";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 
 export function MarginDashboard() {
-  const rows = useMemo(() => computeRows(mockReport.clients), []);
+  const company = useHydratedStore((s) => s.company);
+  const clients = useHydratedStore((s) => s.clients);
+  const entries = useHydratedStore((s) => s.entries);
+
+  const rows = useMemo(() => computeMarginRows(clients, entries), [clients, entries]);
+  const coverage = useMemo(() => computeValidatedRevenueShare(entries), [entries]);
   const [selected, setSelected] = useState<MarginRow | null>(null);
 
-  const validated = rows.filter((r) => r.status === "validata");
-  const inProgress = rows.filter((r) => r.status === "da_validare");
+  const validated = rows.filter((r) => !r.hasUnvalidated);
+  const inProgress = rows.filter((r) => r.hasUnvalidated);
 
   const totals = useMemo(() => {
     const revenue = validated.reduce((s, r) => s + r.revenue, 0);
@@ -27,51 +37,70 @@ export function MarginDashboard() {
     return { revenue, variable, margin, losing };
   }, [validated]);
 
+  const empty = rows.length === 0;
+
   return (
     <div className="min-h-full bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-10">
-        <header className="mb-8">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {mockReport.companyName} · {mockReport.periodLabel}
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Quali clienti ti fanno guadagnare
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pubblicato il {formatDate(mockReport.publishedAt)} · sola lettura
-          </p>
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {company.name} · {company.periodLabel}
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Quali clienti ti fanno guadagnare
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pubblicato il {formatDate(company.publishedAt)} · sola lettura
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/area-dati">
+              <Pencil className="mr-2 h-3.5 w-3.5" /> Area dati
+            </Link>
+          </Button>
         </header>
 
-        <SummaryStrip
-          losing={totals.losing}
-          margin={totals.margin}
-          revenue={totals.revenue}
-          coverage={mockReport.validatedRevenueShare}
-        />
-
-        <section aria-labelledby="sec-validati" className="mt-10">
-          <SectionHeader
-            id="sec-validati"
-            title="Margine per cliente"
-            hint="Ordinati dal peggiore al migliore. Le righe in rosso sono in perdita."
-          />
-          <MarginList rows={validated} onSelect={setSelected} />
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-            <strong className="text-foreground">Primo margine</strong> = ricavi − costi variabili.
-            I costi fissi non sono ripartiti.
-          </p>
-        </section>
-
-        {inProgress.length > 0 && (
-          <section aria-labelledby="sec-lavorazione" className="mt-12">
-            <SectionHeader
-              id="sec-lavorazione"
-              title="In lavorazione"
-              hint="Classificazione non ancora confermata: numeri indicativi, esclusi dai totali."
-              tone="warning"
+        {empty ? (
+          <EmptyDashboard />
+        ) : (
+          <>
+            <SummaryStrip
+              losing={totals.losing}
+              margin={totals.margin}
+              revenue={totals.revenue}
+              coverage={coverage}
             />
-            <MarginList rows={inProgress} onSelect={setSelected} muted />
-          </section>
+
+            <section aria-labelledby="sec-validati" className="mt-10">
+              <SectionHeader
+                id="sec-validati"
+                title="Margine per cliente"
+                hint="Ordinati dal peggiore al migliore. Le righe in rosso sono in perdita."
+              />
+              {validated.length === 0 ? (
+                <EmptyList text="Nessun cliente con voci validate." />
+              ) : (
+                <MarginList rows={validated} onSelect={setSelected} />
+              )}
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                <strong className="text-foreground">Primo margine</strong> = ricavi − costi variabili.
+                I costi fissi non sono ripartiti.
+              </p>
+            </section>
+
+            {inProgress.length > 0 && (
+              <section aria-labelledby="sec-lavorazione" className="mt-12">
+                <SectionHeader
+                  id="sec-lavorazione"
+                  title="In lavorazione"
+                  hint="Classificazione non ancora confermata: numeri indicativi, esclusi dai totali."
+                  tone="warning"
+                />
+                <MarginList rows={inProgress} onSelect={setSelected} muted />
+              </section>
+            )}
+          </>
         )}
       </div>
 
@@ -81,6 +110,41 @@ export function MarginDashboard() {
         onOpenChange={(o) => !o && setSelected(null)}
       />
     </div>
+  );
+}
+
+function EmptyDashboard() {
+  return (
+    <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center">
+      <h2 className="text-base font-semibold tracking-tight">Nessuna voce inserita</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+        Aggiungi ricavi e costi nell'Area dati oppure ripristina i dati di esempio per vedere il
+        margine per cliente.
+      </p>
+      <div className="mt-5 flex justify-center gap-2">
+        <Button asChild>
+          <Link to="/area-dati">Vai all'Area dati</Link>
+        </Button>
+        <ResetSeedButton />
+      </div>
+    </div>
+  );
+}
+
+function ResetSeedButton() {
+  const reset = useLucidoStore((s) => s.resetToSeed);
+  return (
+    <Button variant="outline" onClick={reset}>
+      Ripristina dati di esempio
+    </Button>
+  );
+}
+
+function EmptyList({ text }: { text: string }) {
+  return (
+    <p className="rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
+      {text}
+    </p>
   );
 }
 
@@ -164,17 +228,10 @@ function MarginList({
   onSelect: (row: MarginRow) => void;
   muted?: boolean;
 }) {
-  if (rows.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-        Nessun cliente in questa sezione.
-      </p>
-    );
-  }
   return (
     <ul className={`overflow-hidden rounded-lg border border-border bg-card shadow-sm ${muted ? "opacity-90" : ""}`}>
       {rows.map((row, i) => (
-        <li key={row.id} className={i > 0 ? "border-t border-border" : ""}>
+        <li key={row.clientId} className={i > 0 ? "border-t border-border" : ""}>
           <MarginRowItem row={row} onSelect={onSelect} />
         </li>
       ))}
@@ -202,7 +259,7 @@ function MarginRowItem({ row, onSelect }: { row: MarginRow; onSelect: (r: Margin
             {row.kind === "commessa" && (
               <Badge variant="outline" className="text-[10px] font-medium uppercase">commessa</Badge>
             )}
-            {row.status === "da_validare" && (
+            {row.hasUnvalidated && (
               <Badge className="bg-warning text-warning-foreground hover:bg-warning">Da validare</Badge>
             )}
           </div>
@@ -286,51 +343,76 @@ function WhyContent({ row }: { row: MarginRow }) {
       <Separator className="my-5" />
 
       <DetailBlock title={`Ricavi attribuiti · ${formatEur(row.revenue)}`}>
-        {row.revenues.map((r, i) => (
-          <li key={i} className="px-3 py-2.5">
-            <div className="flex items-start justify-between gap-4 text-sm">
-              <div className="min-w-0">
-                <p className="font-medium text-foreground">{r.description}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <SourceBadge source="fattura" />
-                  <span>n. {r.invoiceNumber}</span>
-                  <span>·</span>
-                  <span>{formatDate(r.date)}</span>
-                </div>
-              </div>
-              <span className="tabular shrink-0 text-positive">+{formatEur(r.amount, true)}</span>
-            </div>
-          </li>
-        ))}
+        {row.revenues.length === 0 ? (
+          <li className="px-3 py-2.5 text-sm text-muted-foreground">Nessun ricavo attribuito.</li>
+        ) : (
+          row.revenues.map((r) => <RevenueLineItem key={r.id} entry={r} />)
+        )}
       </DetailBlock>
 
       <div className="h-5" />
 
       <DetailBlock title={`Costi variabili attribuiti · ${formatEur(row.variableCosts)}`}>
-        {row.costs.map((c, i) => (
-          <li key={i} className="px-3 py-2.5">
-            <div className="flex items-start justify-between gap-4 text-sm">
-              <div className="min-w-0">
-                <p className="font-medium text-foreground">{c.description}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{c.counterparty}</p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <SourceBadge source={c.source} />
-                  <ConfidenceBadge band={c.confidence} />
-                  <ValidatorBadge by={c.validatedBy} />
-                </div>
-              </div>
-              <span className="tabular shrink-0 text-foreground">−{formatEur(c.amount, true)}</span>
-            </div>
-          </li>
-        ))}
+        {row.costs.length === 0 ? (
+          <li className="px-3 py-2.5 text-sm text-muted-foreground">Nessun costo variabile attribuito.</li>
+        ) : (
+          row.costs.map((c) => <CostLineItem key={c.id} entry={c} />)
+        )}
       </DetailBlock>
 
       <p className="mt-6 rounded-md border border-border bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">
         I costi fissi (struttura, stipendi, software comuni) non sono ripartiti sul singolo
-        cliente. Solo le voci ad alta confidenza o validate dall'operatore entrano nei totali
-        pubblicati.
+        cliente. Solo le voci validate dall'operatore entrano nei totali pubblicati.
       </p>
     </>
+  );
+}
+
+function RevenueLineItem({ entry }: { entry: Entry }) {
+  return (
+    <li className="px-3 py-2.5">
+      <div className="flex items-start justify-between gap-4 text-sm">
+        <div className="min-w-0">
+          <p className="font-medium text-foreground">{entry.description}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <SourceBadge source={entry.source} />
+            {entry.invoiceNumber && <span>n. {entry.invoiceNumber}</span>}
+            <span>·</span>
+            <span>{formatDate(entry.date)}</span>
+            {entry.status === "da_validare" && (
+              <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[10px]">
+                Da validare
+              </Badge>
+            )}
+          </div>
+        </div>
+        <span className="tabular shrink-0 text-positive">+{formatEur(entry.amount, true)}</span>
+      </div>
+    </li>
+  );
+}
+
+function CostLineItem({ entry }: { entry: Entry }) {
+  return (
+    <li className="px-3 py-2.5">
+      <div className="flex items-start justify-between gap-4 text-sm">
+        <div className="min-w-0">
+          <p className="font-medium text-foreground">{entry.description}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{entry.counterparty}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <SourceBadge source={entry.source} />
+            <ConfidenceBadge band={entry.confidence} />
+            {entry.validatedBy && <ValidatorBadge by={entry.validatedBy} />}
+            {entry.status === "da_validare" && (
+              <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[10px]">
+                Da validare
+              </Badge>
+            )}
+          </div>
+        </div>
+        <span className="tabular shrink-0 text-foreground">−{formatEur(entry.amount, true)}</span>
+      </div>
+    </li>
   );
 }
 
@@ -345,12 +427,18 @@ function DetailBlock({ title, children }: { title: string; children: React.React
   );
 }
 
-function SourceBadge({ source }: { source: "fattura" | "banca" }) {
-  const Icon = source === "fattura" ? FileText : Landmark;
+function SourceBadge({ source }: { source: Entry["source"] }) {
+  const map: Record<Entry["source"], { label: string; Icon: typeof FileText }> = {
+    fattura: { label: "Fattura", Icon: FileText },
+    banca: { label: "Banca", Icon: Landmark },
+    manuale: { label: "Manuale", Icon: Pencil },
+    excel: { label: "Excel", Icon: FileText },
+  };
+  const { label, Icon } = map[source];
   return (
     <Badge variant="outline" className="gap-1 text-[10px] font-medium uppercase tracking-wider">
       <Icon className="h-3 w-3" aria-hidden />
-      {source === "fattura" ? "Fattura" : "Banca"}
+      {label}
     </Badge>
   );
 }
