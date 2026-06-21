@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
@@ -14,7 +14,6 @@ import { ClientsManager } from "@/components/data-area/ClientsManager";
 import { EntriesEditor } from "@/components/data-area/EntriesEditor";
 import { ImportPanel } from "@/components/data-area/ImportPanel";
 import { useLucidoStore } from "@/lib/store";
-import { useIsHydrated } from "@/lib/use-store";
 
 export const Route = createFileRoute("/area-dati")({
   head: () => ({
@@ -28,8 +27,14 @@ export const Route = createFileRoute("/area-dati")({
 
 function AreaDatiPage() {
   const [tab, setTab] = useState("voci");
-  const hydrated = useIsHydrated();
   const reset = useLucidoStore((s) => s.resetToSeed);
+
+  // Idrata da localStorage al mount (no gate: lo store ha già il seed come default)
+  useEffect(() => {
+    try { void useLucidoStore.persist.rehydrate(); } catch {}
+  }, []);
+
+
 
   return (
     <div className="min-h-full bg-background">
@@ -70,20 +75,16 @@ function AreaDatiPage() {
           </AlertDialog>
         </header>
 
-        {!hydrated ? (
-          <p className="text-sm text-muted-foreground">Caricamento dati locali…</p>
-        ) : (
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList>
-              <TabsTrigger value="voci">Editor voci</TabsTrigger>
-              <TabsTrigger value="clienti">Clienti e commesse</TabsTrigger>
-              <TabsTrigger value="import">Import file</TabsTrigger>
-            </TabsList>
-            <TabsContent value="voci" className="mt-6"><EntriesEditor /></TabsContent>
-            <TabsContent value="clienti" className="mt-6"><ClientsManager /></TabsContent>
-            <TabsContent value="import" className="mt-6"><ImportPanel /></TabsContent>
-          </Tabs>
-        )}
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList>
+            <TabsTrigger value="voci">Editor voci</TabsTrigger>
+            <TabsTrigger value="clienti">Clienti e commesse</TabsTrigger>
+            <TabsTrigger value="import">Import file</TabsTrigger>
+          </TabsList>
+          <TabsContent value="voci" className="mt-6"><EntriesEditor /></TabsContent>
+          <TabsContent value="clienti" className="mt-6"><ClientsManager /></TabsContent>
+          <TabsContent value="import" className="mt-6"><ImportPanel /></TabsContent>
+        </Tabs>
       </div>
     </div>
   );
