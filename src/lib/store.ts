@@ -5,8 +5,13 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { Client, Entry, MarginRow } from "./types";
 import { SEED_CLIENTS, SEED_ENTRIES, SEED_COMPANY, SEED_THRESHOLDS } from "./seed";
+
+type EntryInsert = Database["public"]["Tables"]["entries"]["Insert"];
+type EntryUpdate = Database["public"]["Tables"]["entries"]["Update"];
+type ClientUpdate = Database["public"]["Tables"]["clients"]["Update"];
 
 export interface Company {
   name: string;
