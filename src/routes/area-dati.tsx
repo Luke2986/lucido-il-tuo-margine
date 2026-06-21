@@ -14,7 +14,7 @@ import { ClientsManager } from "@/components/data-area/ClientsManager";
 import { EntriesEditor } from "@/components/data-area/EntriesEditor";
 import { ImportPanel } from "@/components/data-area/ImportPanel";
 import { useLucidoStore } from "@/lib/store";
-import { useIsHydrated } from "@/lib/use-store";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/area-dati")({
   head: () => ({
