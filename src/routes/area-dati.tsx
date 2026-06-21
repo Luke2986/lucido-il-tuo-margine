@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
@@ -14,7 +14,6 @@ import { ClientsManager } from "@/components/data-area/ClientsManager";
 import { EntriesEditor } from "@/components/data-area/EntriesEditor";
 import { ImportPanel } from "@/components/data-area/ImportPanel";
 import { useLucidoStore } from "@/lib/store";
-import { useEffect, useState as useReactState } from "react";
 
 export const Route = createFileRoute("/area-dati")({
   head: () => ({
@@ -28,14 +27,13 @@ export const Route = createFileRoute("/area-dati")({
 
 function AreaDatiPage() {
   const [tab, setTab] = useState("voci");
-  const [hydrated, setHydrated] = useReactState(false);
   const reset = useLucidoStore((s) => s.resetToSeed);
 
+  // Idrata da localStorage al mount (no gate: lo store ha già il seed come default)
   useEffect(() => {
-    // Idrata da localStorage (no-op se vuoto). Mostriamo comunque il seed di default.
     try { void useLucidoStore.persist.rehydrate(); } catch {}
-    setHydrated(true);
   }, []);
+
 
 
   return (
