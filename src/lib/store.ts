@@ -3,12 +3,30 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Client, Entry, MarginRow } from "./types";
-import { SEED_CLIENTS, SEED_ENTRIES, SEED_COMPANY } from "./seed";
+import { SEED_CLIENTS, SEED_ENTRIES, SEED_COMPANY, SEED_THRESHOLDS } from "./seed";
+
+export interface Company {
+  name: string;
+  vatNumber: string;
+  sector: string;
+  periodLabel: string;
+  publishedAt: string;
+}
+
+export interface ConfidenceThresholds {
+  high: number;
+  medium: number;
+}
 
 interface LucidoState {
-  company: { name: string; periodLabel: string; publishedAt: string };
+  company: Company;
+  thresholds: ConfidenceThresholds;
   clients: Client[];
   entries: Entry[];
+
+  // Azienda / soglie
+  updateCompany: (patch: Partial<Company>) => void;
+  updateThresholds: (patch: Partial<ConfidenceThresholds>) => void;
 
   // Clienti / commesse
   addClient: (c: Omit<Client, "id">) => Client;
@@ -23,6 +41,7 @@ interface LucidoState {
   removeEntry: (id: string) => void;
 
   resetToSeed: () => void;
+  clearAll: () => void;
 }
 
 const newId = (prefix: string) =>
@@ -32,8 +51,13 @@ export const useLucidoStore = create<LucidoState>()(
   persist(
     (set) => ({
       company: SEED_COMPANY,
+      thresholds: SEED_THRESHOLDS,
       clients: SEED_CLIENTS,
       entries: SEED_ENTRIES,
+
+      updateCompany: (patch) => set((s) => ({ company: { ...s.company, ...patch } })),
+      updateThresholds: (patch) =>
+        set((s) => ({ thresholds: { ...s.thresholds, ...patch } })),
 
       addClient: (c) => {
         const created: Client = { ...c, id: newId("c") };
@@ -73,14 +97,37 @@ export const useLucidoStore = create<LucidoState>()(
       removeEntry: (id) => set((s) => ({ entries: s.entries.filter((e) => e.id !== id) })),
 
       resetToSeed: () =>
-        set({ company: SEED_COMPANY, clients: SEED_CLIENTS, entries: SEED_ENTRIES }),
+        set({
+          company: SEED_COMPANY,
+          thresholds: SEED_THRESHOLDS,
+          clients: SEED_CLIENTS,
+          entries: SEED_ENTRIES,
+        }),
+      clearAll: () =>
+        set({
+          company: { ...SEED_COMPANY, name: "", vatNumber: "", sector: "", periodLabel: "" },
+          thresholds: SEED_THRESHOLDS,
+          clients: [],
+          entries: [],
+        }),
     }),
     {
       name: "lucido-v0",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       // SSR-safe: skipHydration durante il render server, idratazione al mount
       skipHydration: true,
+      migrate: (persisted: unknown, version) => {
+        const state = (persisted ?? {}) as Partial<LucidoState>;
+        if (version < 2) {
+          return {
+            ...state,
+            company: { ...SEED_COMPANY, ...(state.company ?? {}) },
+            thresholds: { ...SEED_THRESHOLDS, ...(state.thresholds ?? {}) },
+          } as LucidoState;
+        }
+        return state as LucidoState;
+      },
     },
   ),
 );
