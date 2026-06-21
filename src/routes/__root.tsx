@@ -14,6 +14,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AuthScreen } from "@/components/AuthScreen";
 
 function NotFoundComponent() {
   return (
@@ -119,24 +121,45 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar />
-          <div className="flex min-h-screen flex-1 flex-col">
-            <header className="flex h-12 items-center gap-2 border-b border-border bg-card px-3">
-              <SidebarTrigger aria-label="Apri o chiudi la barra laterale" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Lucido · Controllo di gestione
-              </span>
-            </header>
-            <main className="flex-1">
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
-            </main>
-          </div>
-        </div>
+      <AuthProvider>
+        <AuthGate />
         <Toaster position="top-right" />
-      </SidebarProvider>
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AuthGate() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Caricamento…</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthScreen />;
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <div className="flex min-h-screen flex-1 flex-col">
+          <header className="flex h-12 items-center gap-2 border-b border-border bg-card px-3">
+            <SidebarTrigger aria-label="Apri o chiudi la barra laterale" />
+            <span className="text-xs font-medium text-muted-foreground">
+              Lucido · Controllo di gestione
+            </span>
+          </header>
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
