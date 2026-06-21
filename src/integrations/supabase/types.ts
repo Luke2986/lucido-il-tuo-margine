@@ -14,7 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["client_kind"]
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          kind: Database["public"]["Enums"]["client_kind"]
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["client_kind"]
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          period_label: string
+          published_at: string | null
+          sector: string
+          updated_at: string
+          vat_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          period_label?: string
+          published_at?: string | null
+          sector?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          period_label?: string
+          published_at?: string | null
+          sector?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Relationships: []
+      }
+      entries: {
+        Row: {
+          amount: number
+          client_id: string | null
+          confidence: Database["public"]["Enums"]["confidence_band"]
+          cost_type: Database["public"]["Enums"]["cost_type"] | null
+          counterparty: string
+          created_at: string
+          description: string
+          direction: Database["public"]["Enums"]["entry_direction"]
+          entry_date: string
+          id: string
+          invoice_number: string | null
+          source: Database["public"]["Enums"]["entry_source"]
+          status: Database["public"]["Enums"]["validation_status"]
+          updated_at: string
+          validated_by: Database["public"]["Enums"]["validator"] | null
+        }
+        Insert: {
+          amount: number
+          client_id?: string | null
+          confidence: Database["public"]["Enums"]["confidence_band"]
+          cost_type?: Database["public"]["Enums"]["cost_type"] | null
+          counterparty: string
+          created_at?: string
+          description: string
+          direction: Database["public"]["Enums"]["entry_direction"]
+          entry_date: string
+          id: string
+          invoice_number?: string | null
+          source: Database["public"]["Enums"]["entry_source"]
+          status: Database["public"]["Enums"]["validation_status"]
+          updated_at?: string
+          validated_by?: Database["public"]["Enums"]["validator"] | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          confidence?: Database["public"]["Enums"]["confidence_band"]
+          cost_type?: Database["public"]["Enums"]["cost_type"] | null
+          counterparty?: string
+          created_at?: string
+          description?: string
+          direction?: Database["public"]["Enums"]["entry_direction"]
+          entry_date?: string
+          id?: string
+          invoice_number?: string | null
+          source?: Database["public"]["Enums"]["entry_source"]
+          status?: Database["public"]["Enums"]["validation_status"]
+          updated_at?: string
+          validated_by?: Database["public"]["Enums"]["validator"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          created_at: string
+          id: string
+          threshold_high: number
+          threshold_medium: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          threshold_high?: number
+          threshold_medium?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          threshold_high?: number
+          threshold_medium?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +165,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      client_kind: "cliente" | "commessa"
+      confidence_band: "alta" | "media" | "bassa"
+      cost_type: "fisso" | "variabile" | "non_costo"
+      entry_direction: "ricavo" | "costo"
+      entry_source: "manuale" | "fattura" | "banca" | "excel"
+      validation_status: "da_validare" | "validato"
+      validator: "AI" | "Operatore"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +298,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      client_kind: ["cliente", "commessa"],
+      confidence_band: ["alta", "media", "bassa"],
+      cost_type: ["fisso", "variabile", "non_costo"],
+      entry_direction: ["ricavo", "costo"],
+      entry_source: ["manuale", "fattura", "banca", "excel"],
+      validation_status: ["da_validare", "validato"],
+      validator: ["AI", "Operatore"],
+    },
   },
 } as const

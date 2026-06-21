@@ -1,36 +1,29 @@
-// Hook per idratare lo store dal localStorage solo lato client.
-// Evita mismatch SSR: durante il render server lo store usa lo stato di default (seed).
+// Hook per caricare i dati dal database al primo render lato client.
 
 import { useEffect, useState } from "react";
 import { useLucidoStore } from "./store";
 
 export function useHydratedStore<T>(selector: (s: ReturnType<typeof useLucidoStore.getState>) => T): T {
-  const [hydrated, setHydrated] = useState(false);
   const value = useLucidoStore(selector);
 
   useEffect(() => {
-    void useLucidoStore.persist.rehydrate();
-    setHydrated(true);
+    const s = useLucidoStore.getState();
+    if (!s.loaded && !s.loading) void s.loadAll();
   }, []);
 
-  // Prima dell'idratazione restituisce comunque il valore corrente (seed).
-  // Il flag è esposto a chi ne ha bisogno via useIsHydrated.
-  void hydrated;
   return value;
 }
 
 export function useIsHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(false);
+  const loaded = useLucidoStore((s) => s.loaded);
+  const loading = useLucidoStore((s) => s.loading);
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    let cancelled = false;
-    const done = () => { if (!cancelled) setHydrated(true); };
-    try {
-      const p = useLucidoStore.persist.rehydrate();
-      Promise.resolve(p).then(done).catch(done);
-    } catch {
-      done();
-    }
-    return () => { cancelled = true; };
+    setMounted(true);
+    const s = useLucidoStore.getState();
+    if (!s.loaded && !s.loading) void s.loadAll();
   }, []);
-  return hydrated;
+
+  return mounted && loaded && !loading;
 }

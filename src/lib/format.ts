@@ -31,5 +31,9 @@ export const formatEur = (value: number, withCents = false): string =>
 
 export const formatPercent = (ratio: number): string => percentFormatter.format(ratio);
 
-export const formatDate = (value: Date | string): string =>
-  dateFormatter.format(typeof value === "string" ? new Date(value) : value);
+export const formatDate = (value: Date | string | null | undefined): string => {
+  if (!value) return "";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "";
+  return dateFormatter.format(d);
+};

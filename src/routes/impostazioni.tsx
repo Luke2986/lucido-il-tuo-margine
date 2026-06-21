@@ -23,7 +23,8 @@ export const Route = createFileRoute("/impostazioni")({
 
 function ImpostazioniPage() {
   useEffect(() => {
-    try { void useLucidoStore.persist.rehydrate(); } catch {}
+    const s = useLucidoStore.getState();
+    if (!s.loaded && !s.loading) void s.loadAll();
   }, []);
 
   return (
