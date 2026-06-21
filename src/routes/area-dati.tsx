@@ -70,20 +70,22 @@ function AreaDatiPage() {
           </AlertDialog>
         </header>
 
-        {!hydrated ? (
-          <p className="text-sm text-muted-foreground">Caricamento dati locali…</p>
-        ) : (
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList>
-              <TabsTrigger value="voci">Editor voci</TabsTrigger>
-              <TabsTrigger value="clienti">Clienti e commesse</TabsTrigger>
-              <TabsTrigger value="import">Import file</TabsTrigger>
-            </TabsList>
-            <TabsContent value="voci" className="mt-6"><EntriesEditor /></TabsContent>
-            <TabsContent value="clienti" className="mt-6"><ClientsManager /></TabsContent>
-            <TabsContent value="import" className="mt-6"><ImportPanel /></TabsContent>
-          </Tabs>
-        )}
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList>
+            <TabsTrigger value="voci">Editor voci</TabsTrigger>
+            <TabsTrigger value="clienti">Clienti e commesse</TabsTrigger>
+            <TabsTrigger value="import">Import file</TabsTrigger>
+          </TabsList>
+          <TabsContent value="voci" className="mt-6">
+            {hydrated ? <EntriesEditor /> : <p className="text-sm text-muted-foreground">Caricamento…</p>}
+          </TabsContent>
+          <TabsContent value="clienti" className="mt-6">
+            {hydrated ? <ClientsManager /> : <p className="text-sm text-muted-foreground">Caricamento…</p>}
+          </TabsContent>
+          <TabsContent value="import" className="mt-6">
+            {hydrated ? <ImportPanel /> : <p className="text-sm text-muted-foreground">Caricamento…</p>}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
