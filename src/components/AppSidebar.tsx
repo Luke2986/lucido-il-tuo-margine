@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LineChart, Database, ShieldCheck, Settings, LogOut } from "lucide-react";
+import { LineChart, Database, ShieldCheck, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,8 +13,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Margine clienti", url: "/", icon: LineChart, enabled: true, group: "Titolare" },
