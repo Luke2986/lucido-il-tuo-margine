@@ -14,8 +14,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { AuthScreen } from "@/components/AuthScreen";
 
 function NotFoundComponent() {
   return (
