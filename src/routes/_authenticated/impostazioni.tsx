@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Building2, Gauge, Database, RotateCcw, Trash2, Save } from "lucide-react";
+import { Building2, Gauge, Database, RotateCcw, Trash2, Save, UserCog, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +8,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { useLucidoStore } from "@/lib/store";
+import { useLucidoStore, type AppRole } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/impostazioni")({
   head: () => ({
@@ -43,6 +45,8 @@ function ImpostazioniPage() {
         </header>
 
         <div className="space-y-6">
+          <RoleSection />
+          <PublishSection />
           <CompanySection />
           <ThresholdsSection />
           <DataSection />
