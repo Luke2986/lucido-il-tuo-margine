@@ -245,7 +245,7 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
     set((s) => ({
       clients: s.clients.map((c) => (c.id === id ? { ...c, ...patch } : c)),
     }));
-    const row: Record<string, unknown> = {};
+    const row: ClientUpdate = {};
     if (patch.name !== undefined) row.name = patch.name;
     if (patch.kind !== undefined) row.kind = patch.kind;
     void supabase
