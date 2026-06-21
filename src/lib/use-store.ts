@@ -22,7 +22,7 @@ export function useHydratedStore<T>(selector: (s: ReturnType<typeof useLucidoSto
 export function useIsHydrated(): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    void useLucidoStore.persist.rehydrate().then(() => setHydrated(true));
+    void Promise.resolve(useLucidoStore.persist.rehydrate()).then(() => setHydrated(true));
   }, []);
   return hydrated;
 }
