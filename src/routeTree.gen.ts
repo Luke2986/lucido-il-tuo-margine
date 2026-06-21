@@ -9,86 +9,135 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ImpostazioniRouteImport } from './routes/impostazioni'
-import { Route as AreaDatiRouteImport } from './routes/area-dati'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
+import { Route as AuthenticatedAreaDatiRouteImport } from './routes/_authenticated/area-dati'
 
-const ImpostazioniRoute = ImpostazioniRouteImport.update({
-  id: '/impostazioni',
-  path: '/impostazioni',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AreaDatiRoute = AreaDatiRouteImport.update({
-  id: '/area-dati',
-  path: '/area-dati',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImpostazioniRoute =
+  AuthenticatedImpostazioniRouteImport.update({
+    id: '/impostazioni',
+    path: '/impostazioni',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAreaDatiRoute = AuthenticatedAreaDatiRouteImport.update({
+  id: '/area-dati',
+  path: '/area-dati',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/area-dati': typeof AreaDatiRoute
-  '/impostazioni': typeof ImpostazioniRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/area-dati': typeof AuthenticatedAreaDatiRoute
+  '/impostazioni': typeof AuthenticatedImpostazioniRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/area-dati': typeof AreaDatiRoute
-  '/impostazioni': typeof ImpostazioniRoute
+  '/auth': typeof AuthRoute
+  '/area-dati': typeof AuthenticatedAreaDatiRoute
+  '/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/area-dati': typeof AreaDatiRoute
-  '/impostazioni': typeof ImpostazioniRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/area-dati': typeof AuthenticatedAreaDatiRoute
+  '/_authenticated/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/area-dati' | '/impostazioni'
+  fullPaths: '/' | '/auth' | '/area-dati' | '/impostazioni'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/area-dati' | '/impostazioni'
-  id: '__root__' | '/' | '/area-dati' | '/impostazioni'
+  to: '/auth' | '/area-dati' | '/impostazioni' | '/'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/area-dati'
+    | '/_authenticated/impostazioni'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AreaDatiRoute: typeof AreaDatiRoute
-  ImpostazioniRoute: typeof ImpostazioniRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/impostazioni': {
-      id: '/impostazioni'
-      path: '/impostazioni'
-      fullPath: '/impostazioni'
-      preLoaderRoute: typeof ImpostazioniRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/area-dati': {
-      id: '/area-dati'
-      path: '/area-dati'
-      fullPath: '/area-dati'
-      preLoaderRoute: typeof AreaDatiRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/impostazioni': {
+      id: '/_authenticated/impostazioni'
+      path: '/impostazioni'
+      fullPath: '/impostazioni'
+      preLoaderRoute: typeof AuthenticatedImpostazioniRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/area-dati': {
+      id: '/_authenticated/area-dati'
+      path: '/area-dati'
+      fullPath: '/area-dati'
+      preLoaderRoute: typeof AuthenticatedAreaDatiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAreaDatiRoute: typeof AuthenticatedAreaDatiRoute
+  AuthenticatedImpostazioniRoute: typeof AuthenticatedImpostazioniRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAreaDatiRoute: AuthenticatedAreaDatiRoute,
+  AuthenticatedImpostazioniRoute: AuthenticatedImpostazioniRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AreaDatiRoute: AreaDatiRoute,
-  ImpostazioniRoute: ImpostazioniRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

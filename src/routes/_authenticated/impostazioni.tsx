@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Building2, Gauge, Database, RotateCcw, Trash2, Save } from "lucide-react";
+import { Building2, Gauge, Database, RotateCcw, Trash2, Save, UserCog, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +8,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { useLucidoStore } from "@/lib/store";
+import { useLucidoStore, type AppRole } from "@/lib/store";
 
-export const Route = createFileRoute("/impostazioni")({
+export const Route = createFileRoute("/_authenticated/impostazioni")({
   head: () => ({
     meta: [
       { title: "Impostazioni — Lucido" },
@@ -43,6 +45,8 @@ function ImpostazioniPage() {
         </header>
 
         <div className="space-y-6">
+          <RoleSection />
+          <PublishSection />
           <CompanySection />
           <ThresholdsSection />
           <DataSection />
@@ -258,7 +262,7 @@ function DataSection() {
     <SectionCard
       icon={Database}
       title="Gestione dati"
-      description="Tutti i dati sono salvati localmente sul tuo browser. Nessun backend."
+      description="Tutti i dati sono salvati nel database. Le azioni sotto riguardano la tua azienda."
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">
@@ -341,5 +345,94 @@ function Field({
       <div className="mt-1.5">{children}</div>
       {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
     </div>
+  );
+}
+
+// ---------- Ruolo di test ----------
+
+function RoleSection() {
+  const role = useLucidoStore((s) => s.role);
+  const switchRole = useLucidoStore((s) => s.switchRole);
+  const [busy, setBusy] = useState(false);
+
+  const handleChange = async (value: string) => {
+    if (!role || value === role) return;
+    setBusy(true);
+    await switchRole(value as AppRole);
+    setBusy(false);
+    toast.success(value === "owner" ? "Sei ora Titolare (sola lettura)" : "Sei ora Operatore");
+  };
+
+  if (!role) return null;
+
+  return (
+    <SectionCard
+      icon={UserCog}
+      title="Ruolo di test"
+      description="Cambia il tuo ruolo per provare entrambe le viste. In produzione il ruolo è gestito dall'amministratore."
+    >
+      <RadioGroup
+        value={role}
+        onValueChange={handleChange}
+        className="grid gap-2 sm:grid-cols-2"
+        disabled={busy}
+      >
+        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card p-3 transition-colors hover:bg-secondary/40 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+          <RadioGroupItem value="operator" id="role-operator" className="mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Operatore</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Accesso completo: area dati, classificazione, pubblicazione.
+            </p>
+          </div>
+        </label>
+        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card p-3 transition-colors hover:bg-secondary/40 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+          <RadioGroupItem value="owner" id="role-owner" className="mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Titolare</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Sola lettura della schermata margine, solo se l'azienda è pubblicata.
+            </p>
+          </div>
+        </label>
+      </RadioGroup>
+    </SectionCard>
+  );
+}
+
+// ---------- Pubblicazione ----------
+
+function PublishSection() {
+  const status = useLucidoStore((s) => s.company.status);
+  const setPublished = useLucidoStore((s) => s.setPublished);
+  const isPublished = status === "pubblicata";
+
+  return (
+    <SectionCard
+      icon={Megaphone}
+      title="Pubblicazione"
+      description="Quando l'azienda è pubblicata, il titolare può vedere la schermata margine in sola lettura."
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            Stato attuale: {isPublished ? "Pubblicata" : "Bozza"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {isPublished
+              ? "Il titolare vede ricavi, costi e margine per cliente."
+              : "Il titolare non vede nulla finché non pubblichi."}
+          </p>
+        </div>
+        <Switch
+          checked={isPublished}
+          onCheckedChange={(v) => {
+            setPublished(v);
+            toast.success(v ? "Azienda pubblicata" : "Azienda in bozza");
+          }}
+          aria-label="Pubblica azienda"
+        />
+      </div>
+    </SectionCard>
   );
 }

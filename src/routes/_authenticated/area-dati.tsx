@@ -15,7 +15,7 @@ import { EntriesEditor } from "@/components/data-area/EntriesEditor";
 import { ImportPanel } from "@/components/data-area/ImportPanel";
 import { useLucidoStore } from "@/lib/store";
 
-export const Route = createFileRoute("/area-dati")({
+export const Route = createFileRoute("/_authenticated/area-dati")({
   head: () => ({
     meta: [
       { title: "Area dati — Lucido" },
@@ -49,7 +49,7 @@ function AreaDatiPage() {
               Area dati
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Inserisci, modifica e importa le voci. Tutto è salvato localmente sul tuo browser.
+              Inserisci, modifica e importa le voci. Tutto è salvato nel database della tua azienda.
             </p>
           </div>
           <AlertDialog>

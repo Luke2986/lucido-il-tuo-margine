@@ -14,8 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      classifications: {
+        Row: {
+          client_id: string | null
+          confidence: number
+          confidence_band: Database["public"]["Enums"]["confidence_band"]
+          cost_type: Database["public"]["Enums"]["cost_type"] | null
+          created_at: string
+          id: string
+          method: Database["public"]["Enums"]["classification_method"]
+          rationale: string
+          status: Database["public"]["Enums"]["classification_status"]
+          transaction_id: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: Database["public"]["Enums"]["validator"] | null
+        }
+        Insert: {
+          client_id?: string | null
+          confidence?: number
+          confidence_band?: Database["public"]["Enums"]["confidence_band"]
+          cost_type?: Database["public"]["Enums"]["cost_type"] | null
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["classification_method"]
+          rationale?: string
+          status?: Database["public"]["Enums"]["classification_status"]
+          transaction_id: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: Database["public"]["Enums"]["validator"] | null
+        }
+        Update: {
+          client_id?: string | null
+          confidence?: number
+          confidence_band?: Database["public"]["Enums"]["confidence_band"]
+          cost_type?: Database["public"]["Enums"]["cost_type"] | null
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["classification_method"]
+          rationale?: string
+          status?: Database["public"]["Enums"]["classification_status"]
+          transaction_id?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: Database["public"]["Enums"]["validator"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "margin_by_client"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "classifications_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
+          company_id: string
           created_at: string
           id: string
           kind: Database["public"]["Enums"]["client_kind"]
@@ -23,20 +94,30 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id: string
           created_at?: string
-          id: string
+          id?: string
           kind: Database["public"]["Enums"]["client_kind"]
           name: string
           updated_at?: string
         }
         Update: {
+          company_id?: string
           created_at?: string
           id?: string
           kind?: Database["public"]["Enums"]["client_kind"]
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       companies: {
         Row: {
@@ -46,6 +127,7 @@ export type Database = {
           period_label: string
           published_at: string | null
           sector: string
+          status: Database["public"]["Enums"]["company_status"]
           updated_at: string
           vat_number: string
         }
@@ -56,6 +138,7 @@ export type Database = {
           period_label?: string
           published_at?: string | null
           sector?: string
+          status?: Database["public"]["Enums"]["company_status"]
           updated_at?: string
           vat_number?: string
         }
@@ -66,111 +149,212 @@ export type Database = {
           period_label?: string
           published_at?: string | null
           sector?: string
+          status?: Database["public"]["Enums"]["company_status"]
           updated_at?: string
           vat_number?: string
         }
         Relationships: []
       }
-      entries: {
+      memberships: {
         Row: {
-          amount: number
-          client_id: string | null
-          confidence: Database["public"]["Enums"]["confidence_band"]
-          cost_type: Database["public"]["Enums"]["cost_type"] | null
-          counterparty: string
+          company_id: string
           created_at: string
-          description: string
-          direction: Database["public"]["Enums"]["entry_direction"]
-          entry_date: string
-          id: string
-          invoice_number: string | null
-          source: Database["public"]["Enums"]["entry_source"]
-          status: Database["public"]["Enums"]["validation_status"]
+          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
-          validated_by: Database["public"]["Enums"]["validator"] | null
+          user_id: string
         }
         Insert: {
-          amount: number
-          client_id?: string | null
-          confidence: Database["public"]["Enums"]["confidence_band"]
-          cost_type?: Database["public"]["Enums"]["cost_type"] | null
-          counterparty: string
+          company_id: string
           created_at?: string
-          description: string
-          direction: Database["public"]["Enums"]["entry_direction"]
-          entry_date: string
-          id: string
-          invoice_number?: string | null
-          source: Database["public"]["Enums"]["entry_source"]
-          status: Database["public"]["Enums"]["validation_status"]
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
-          validated_by?: Database["public"]["Enums"]["validator"] | null
+          user_id: string
         }
         Update: {
-          amount?: number
-          client_id?: string | null
-          confidence?: Database["public"]["Enums"]["confidence_band"]
-          cost_type?: Database["public"]["Enums"]["cost_type"] | null
-          counterparty?: string
+          company_id?: string
           created_at?: string
-          description?: string
-          direction?: Database["public"]["Enums"]["entry_direction"]
-          entry_date?: string
-          id?: string
-          invoice_number?: string | null
-          source?: Database["public"]["Enums"]["entry_source"]
-          status?: Database["public"]["Enums"]["validation_status"]
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
-          validated_by?: Database["public"]["Enums"]["validator"] | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "entries_client_id_fkey"
-            columns: ["client_id"]
+            foreignKeyName: "memberships_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
       }
-      settings: {
+      profiles: {
         Row: {
           created_at: string
+          display_name: string
           id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          company_id: string
+          created_at: string
           threshold_high: number
           threshold_medium: number
           updated_at: string
         }
         Insert: {
+          company_id: string
           created_at?: string
-          id?: string
           threshold_high?: number
           threshold_medium?: number
           updated_at?: string
         }
         Update: {
+          company_id?: string
           created_at?: string
-          id?: string
           threshold_high?: number
           threshold_medium?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          client_id: string | null
+          company_id: string
+          counterparty: string
+          created_at: string
+          description: string
+          direction: Database["public"]["Enums"]["tx_direction"]
+          entry_date: string
+          id: string
+          invoice_number: string | null
+          source: Database["public"]["Enums"]["entry_source"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id?: string | null
+          company_id: string
+          counterparty?: string
+          created_at?: string
+          description: string
+          direction: Database["public"]["Enums"]["tx_direction"]
+          entry_date: string
+          id?: string
+          invoice_number?: string | null
+          source?: Database["public"]["Enums"]["entry_source"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          company_id?: string
+          counterparty?: string
+          created_at?: string
+          description?: string
+          direction?: Database["public"]["Enums"]["tx_direction"]
+          entry_date?: string
+          id?: string
+          invoice_number?: string | null
+          source?: Database["public"]["Enums"]["entry_source"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "margin_by_client"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      margin_by_client: {
+        Row: {
+          client_id: string | null
+          client_kind: Database["public"]["Enums"]["client_kind"] | null
+          client_name: string | null
+          company_id: string | null
+          margin: number | null
+          revenues: number | null
+          variable_costs: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      has_role_in_company: {
+        Args: {
+          _company_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_company_published: { Args: { _company_id: string }; Returns: boolean }
+      is_member: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "operator" | "owner"
+      classification_method: "manuale" | "ai" | "regola"
+      classification_status: "ai_proposta" | "validata" | "override"
       client_kind: "cliente" | "commessa"
+      company_status: "bozza" | "pubblicata"
       confidence_band: "alta" | "media" | "bassa"
       cost_type: "fisso" | "variabile" | "non_costo"
-      entry_direction: "ricavo" | "costo"
       entry_source: "manuale" | "fattura" | "banca" | "excel"
-      validation_status: "da_validare" | "validato"
+      tx_direction: "ricavo" | "costo"
       validator: "AI" | "Operatore"
     }
     CompositeTypes: {
@@ -299,12 +483,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["operator", "owner"],
+      classification_method: ["manuale", "ai", "regola"],
+      classification_status: ["ai_proposta", "validata", "override"],
       client_kind: ["cliente", "commessa"],
+      company_status: ["bozza", "pubblicata"],
       confidence_band: ["alta", "media", "bassa"],
       cost_type: ["fisso", "variabile", "non_costo"],
-      entry_direction: ["ricavo", "costo"],
       entry_source: ["manuale", "fattura", "banca", "excel"],
-      validation_status: ["da_validare", "validato"],
+      tx_direction: ["ricavo", "costo"],
       validator: ["AI", "Operatore"],
     },
   },
