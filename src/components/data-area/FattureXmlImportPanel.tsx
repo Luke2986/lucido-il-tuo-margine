@@ -224,14 +224,14 @@ export function FattureXmlImportPanel() {
                 <table className="w-full min-w-[900px] text-xs">
                   <thead className="border-b border-border bg-secondary/40 text-[10px] uppercase text-muted-foreground">
                     <tr>
-                      <Th className="w-8"></Th>
+                      <Th className="w-8"> </Th>
                       <Th>Data</Th>
                       <Th>Controparte</Th>
                       <Th>Descrizione</Th>
                       <Th className="text-right">Importo (netto)</Th>
                       <Th>Direzione</Th>
                       <Th>Cliente</Th>
-                      <Th className="w-8"></Th>
+                      <Th className="w-8"> </Th>
                     </tr>
                   </thead>
                   <tbody>
@@ -365,7 +365,7 @@ export function FattureXmlImportPanel() {
 function FileDrop({
   inputRef, onFiles,
 }: {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   onFiles: (files: FileList | null) => void;
 }) {
   return (
