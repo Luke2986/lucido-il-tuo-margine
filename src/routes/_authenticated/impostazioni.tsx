@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import { useLucidoStore } from "@/lib/store";
 
-export const Route = createFileRoute("/impostazioni")({
+export const Route = createFileRoute("/_authenticated/impostazioni")({
   head: () => ({
     meta: [
       { title: "Impostazioni — Lucido" },

@@ -15,7 +15,7 @@ import { EntriesEditor } from "@/components/data-area/EntriesEditor";
 import { ImportPanel } from "@/components/data-area/ImportPanel";
 import { useLucidoStore } from "@/lib/store";
 
-export const Route = createFileRoute("/area-dati")({
+export const Route = createFileRoute("/_authenticated/area-dati")({
   head: () => ({
     meta: [
       { title: "Area dati — Lucido" },
