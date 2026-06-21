@@ -5,8 +5,15 @@ import type { Client, Entry } from "./types";
 
 export const SEED_COMPANY = {
   name: "Studio Marini S.r.l.",
+  vatNumber: "01234567890",
+  sector: "Consulenza direzionale",
   periodLabel: "Gennaio – Maggio 2026",
   publishedAt: "2026-06-18",
+};
+
+export const SEED_THRESHOLDS = {
+  high: 0.85,
+  medium: 0.6,
 };
 
 export const SEED_CLIENTS: Client[] = [
