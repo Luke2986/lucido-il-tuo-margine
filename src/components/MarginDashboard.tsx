@@ -1,48 +1,47 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, TrendingDown, TrendingUp, Info, ShieldCheck, AlertCircle } from "lucide-react";
+import { ChevronRight, TrendingDown, TrendingUp, ShieldCheck, AlertCircle, FileText, Landmark, Sparkles, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { computeRows, mockReport, type MarginRow } from "@/lib/mock-margins";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { computeRows, mockReport, type MarginRow, type ConfidenceBand } from "@/lib/mock-margins";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
 export function MarginDashboard() {
   const rows = useMemo(() => computeRows(mockReport.clients), []);
-
-  const totals = useMemo(() => {
-    const revenue = rows.reduce((s, r) => s + r.revenue, 0);
-    const variable = rows.reduce((s, r) => s + r.variableCosts, 0);
-    const margin = revenue - variable;
-    const losing = rows.filter((r) => r.isLoss).length;
-    return { revenue, variable, margin, losing };
-  }, [rows]);
+  const [selected, setSelected] = useState<MarginRow | null>(null);
 
   const validated = rows.filter((r) => r.status === "validata");
   const inProgress = rows.filter((r) => r.status === "da_validare");
 
-  return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-5 sm:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {mockReport.companyName}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                Quali clienti ti fanno guadagnare
-              </h1>
-            </div>
-            <div className="hidden text-right text-xs text-muted-foreground sm:block">
-              <p>Periodo</p>
-              <p className="mt-0.5 font-medium text-foreground">{mockReport.periodLabel}</p>
-              <p className="mt-1">Pubblicato il {formatDate(mockReport.publishedAt)}</p>
-            </div>
-          </div>
-        </div>
-      </header>
+  const totals = useMemo(() => {
+    const revenue = validated.reduce((s, r) => s + r.revenue, 0);
+    const variable = validated.reduce((s, r) => s + r.variableCosts, 0);
+    const margin = revenue - variable;
+    const losing = validated.filter((r) => r.isLoss).length;
+    return { revenue, variable, margin, losing };
+  }, [validated]);
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+  return (
+    <div className="min-h-full bg-background">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-10">
+        <header className="mb-8">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {mockReport.companyName} · {mockReport.periodLabel}
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Quali clienti ti fanno guadagnare
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pubblicato il {formatDate(mockReport.publishedAt)} · sola lettura
+          </p>
+        </header>
+
         <SummaryStrip
           losing={totals.losing}
           margin={totals.margin}
@@ -56,28 +55,36 @@ export function MarginDashboard() {
             title="Margine per cliente"
             hint="Ordinati dal peggiore al migliore. Le righe in rosso sono in perdita."
           />
-          <MarginList rows={validated} />
+          <MarginList rows={validated} onSelect={setSelected} />
+          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+            <strong className="text-foreground">Primo margine</strong> = ricavi − costi variabili.
+            I costi fissi non sono ripartiti.
+          </p>
         </section>
 
         {inProgress.length > 0 && (
-          <section aria-labelledby="sec-lavorazione" className="mt-10">
+          <section aria-labelledby="sec-lavorazione" className="mt-12">
             <SectionHeader
               id="sec-lavorazione"
               title="In lavorazione"
-              hint="Classificazione non ancora confermata: numeri indicativi, non entrano nei totali pubblicati."
+              hint="Classificazione non ancora confermata: numeri indicativi, esclusi dai totali."
               tone="warning"
             />
-            <MarginList rows={inProgress} muted />
+            <MarginList rows={inProgress} onSelect={setSelected} muted />
           </section>
         )}
-
-        <Disclaimer />
       </div>
-    </main>
+
+      <WhySheet
+        row={selected}
+        open={selected !== null}
+        onOpenChange={(o) => !o && setSelected(null)}
+      />
+    </div>
   );
 }
 
-// ---------- Sotto-componenti ----------
+// ---------- Riepilogo ----------
 
 function SummaryStrip(props: { losing: number; margin: number; revenue: number; coverage: number }) {
   const { losing, margin, revenue, coverage } = props;
@@ -95,7 +102,7 @@ function SummaryStrip(props: { losing: number; margin: number; revenue: number; 
         value={formatEur(margin)}
         accent={margin < 0 ? "destructive" : "positive"}
         icon={margin < 0 ? <TrendingDown className="h-4 w-4" aria-hidden /> : <TrendingUp className="h-4 w-4" aria-hidden />}
-        hint={`Su ${formatEur(revenue)} di ricavo`}
+        hint={`Su ${formatEur(revenue)} di ricavo validato`}
       />
       <StatCard
         label="Copertura validata"
@@ -133,6 +140,8 @@ function StatCard(props: {
   );
 }
 
+// ---------- Lista margine ----------
+
 function SectionHeader(props: { id: string; title: string; hint: string; tone?: "warning" }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-4">
@@ -146,7 +155,15 @@ function SectionHeader(props: { id: string; title: string; hint: string; tone?: 
   );
 }
 
-function MarginList({ rows, muted = false }: { rows: MarginRow[]; muted?: boolean }) {
+function MarginList({
+  rows,
+  onSelect,
+  muted = false,
+}: {
+  rows: MarginRow[];
+  onSelect: (row: MarginRow) => void;
+  muted?: boolean;
+}) {
   if (rows.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
@@ -158,15 +175,14 @@ function MarginList({ rows, muted = false }: { rows: MarginRow[]; muted?: boolea
     <ul className={`overflow-hidden rounded-lg border border-border bg-card shadow-sm ${muted ? "opacity-90" : ""}`}>
       {rows.map((row, i) => (
         <li key={row.id} className={i > 0 ? "border-t border-border" : ""}>
-          <MarginRowItem row={row} />
+          <MarginRowItem row={row} onSelect={onSelect} />
         </li>
       ))}
     </ul>
   );
 }
 
-function MarginRowItem({ row }: { row: MarginRow }) {
-  const [open, setOpen] = useState(false);
+function MarginRowItem({ row, onSelect }: { row: MarginRow; onSelect: (r: MarginRow) => void }) {
   const accent = row.isLoss ? "bg-destructive" : "bg-positive";
   const marginColor = row.isLoss ? "text-destructive" : "text-positive";
   const sign = row.isLoss ? "−" : "+";
@@ -177,13 +193,11 @@ function MarginRowItem({ row }: { row: MarginRow }) {
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} aria-hidden />
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-6 gap-y-2 px-5 py-4 pl-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]"
+        onClick={() => onSelect(row)}
+        className="grid w-full grid-cols-[1fr_auto] items-center gap-x-6 gap-y-2 px-5 py-4 pl-6 text-left transition-colors hover:bg-secondary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]"
       >
-        {/* Nome + kind + badge */}
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold text-foreground sm:text-base">{row.name}</p>
             {row.kind === "commessa" && (
               <Badge variant="outline" className="text-[10px] font-medium uppercase">commessa</Badge>
@@ -199,19 +213,16 @@ function MarginRowItem({ row }: { row: MarginRow }) {
           </p>
         </div>
 
-        {/* Ricavo */}
         <div className="hidden text-right sm:block">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Ricavo</p>
           <p className="tabular text-sm font-medium text-foreground">{formatEur(row.revenue)}</p>
         </div>
 
-        {/* Costi variabili */}
         <div className="hidden text-right sm:block">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Costi variabili</p>
           <p className="tabular text-sm font-medium text-foreground">{formatEur(row.variableCosts)}</p>
         </div>
 
-        {/* Primo margine */}
         <div className="text-right">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Primo margine</p>
           <p className={`tabular text-lg font-semibold ${marginColor}`}>
@@ -222,77 +233,104 @@ function MarginRowItem({ row }: { row: MarginRow }) {
           </p>
         </div>
 
-        <ChevronDown
-          className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${open ? "rotate-180" : ""}`}
-          aria-hidden
-        />
+        <ChevronRight className="hidden h-4 w-4 text-muted-foreground sm:block" aria-hidden />
       </button>
-
-      {open && <WhyPanel row={row} />}
     </div>
   );
 }
 
-function WhyPanel({ row }: { row: MarginRow }) {
-  const absMargin = Math.abs(row.margin);
+// ---------- Sheet "Perché questo numero" ----------
+
+function WhySheet({
+  row,
+  open,
+  onOpenChange,
+}: {
+  row: MarginRow | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   return (
-    <div className="border-t border-border bg-secondary/40 px-6 py-5">
-      <div className="mb-4 flex items-start gap-2">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-        <p className="text-sm text-foreground">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
+        {row && <WhyContent row={row} />}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function WhyContent({ row }: { row: MarginRow }) {
+  const absMargin = Math.abs(row.margin);
+  const marginColor = row.isLoss ? "text-destructive" : "text-positive";
+
+  return (
+    <>
+      <SheetHeader className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Perché questo numero
+        </p>
+        <SheetTitle className="text-xl font-semibold tracking-tight">{row.name}</SheetTitle>
+        <SheetDescription className="text-sm leading-relaxed text-foreground">
           Questo cliente ti è costato{" "}
           <strong className="tabular">{formatEur(row.variableCosts)}</strong> di costi variabili a
-          fronte di <strong className="tabular">{formatEur(row.revenue)}</strong> di ricavo →{" "}
+          fronte di <strong className="tabular">{formatEur(row.revenue)}</strong> di ricavo → primo
           margine{" "}
-          <strong className={`tabular ${row.isLoss ? "text-destructive" : "text-positive"}`}>
-            {row.isLoss ? `−${formatEur(absMargin)}` : `+${formatEur(absMargin)}`}
+          <strong className={`tabular ${marginColor}`}>
+            {row.isLoss ? `−${formatEur(absMargin)}` : `+${formatEur(absMargin)}`}{" "}
+            ({formatPercent(Math.abs(row.marginPct))})
           </strong>
           .
-        </p>
-      </div>
+        </SheetDescription>
+      </SheetHeader>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <DetailBlock title="Ricavi attribuiti">
-          {row.revenues.map((r, i) => (
-            <DetailLine
-              key={i}
-              left={
-                <>
-                  <p className="font-medium text-foreground">{r.description}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Fattura {r.invoiceNumber} · {formatDate(r.date)}
-                  </p>
-                </>
-              }
-              right={<span className="tabular text-positive">+{formatEur(r.amount, true)}</span>}
-            />
-          ))}
-        </DetailBlock>
+      <Separator className="my-5" />
 
-        <DetailBlock title="Costi variabili attribuiti">
-          {row.costs.map((c, i) => (
-            <DetailLine
-              key={i}
-              left={
-                <>
-                  <p className="font-medium text-foreground">{c.description}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {c.counterparty} · fonte: {c.source}
-                  </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <ConfidenceBadge band={c.confidence} />
-                    <span className="text-[11px] text-muted-foreground">
-                      validato da {c.validatedBy}
-                    </span>
-                  </div>
-                </>
-              }
-              right={<span className="tabular text-foreground">−{formatEur(c.amount, true)}</span>}
-            />
-          ))}
-        </DetailBlock>
-      </div>
-    </div>
+      <DetailBlock title={`Ricavi attribuiti · ${formatEur(row.revenue)}`}>
+        {row.revenues.map((r, i) => (
+          <li key={i} className="px-3 py-2.5">
+            <div className="flex items-start justify-between gap-4 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium text-foreground">{r.description}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <SourceBadge source="fattura" />
+                  <span>n. {r.invoiceNumber}</span>
+                  <span>·</span>
+                  <span>{formatDate(r.date)}</span>
+                </div>
+              </div>
+              <span className="tabular shrink-0 text-positive">+{formatEur(r.amount, true)}</span>
+            </div>
+          </li>
+        ))}
+      </DetailBlock>
+
+      <div className="h-5" />
+
+      <DetailBlock title={`Costi variabili attribuiti · ${formatEur(row.variableCosts)}`}>
+        {row.costs.map((c, i) => (
+          <li key={i} className="px-3 py-2.5">
+            <div className="flex items-start justify-between gap-4 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium text-foreground">{c.description}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{c.counterparty}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <SourceBadge source={c.source} />
+                  <ConfidenceBadge band={c.confidence} />
+                  <ValidatorBadge by={c.validatedBy} />
+                </div>
+              </div>
+              <span className="tabular shrink-0 text-foreground">−{formatEur(c.amount, true)}</span>
+            </div>
+          </li>
+        ))}
+      </DetailBlock>
+
+      <p className="mt-6 rounded-md border border-border bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">
+        I costi fissi (struttura, stipendi, software comuni) non sono ripartiti sul singolo
+        cliente. Solo le voci ad alta confidenza o validate dall'operatore entrano nei totali
+        pubblicati.
+      </p>
+    </>
   );
 }
 
@@ -302,47 +340,37 @@ function DetailBlock({ title, children }: { title: string; children: React.React
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
-      <ul className="divide-y divide-border rounded-md border border-border bg-card">
-        {children}
-      </ul>
+      <ul className="divide-y divide-border rounded-md border border-border bg-card">{children}</ul>
     </div>
   );
 }
 
-function DetailLine({ left, right }: { left: React.ReactNode; right: React.ReactNode }) {
+function SourceBadge({ source }: { source: "fattura" | "banca" }) {
+  const Icon = source === "fattura" ? FileText : Landmark;
   return (
-    <li className="flex items-start justify-between gap-4 px-3 py-2.5 text-sm">
-      <div className="min-w-0">{left}</div>
-      <div className="shrink-0 text-right text-sm font-medium">{right}</div>
-    </li>
+    <Badge variant="outline" className="gap-1 text-[10px] font-medium uppercase tracking-wider">
+      <Icon className="h-3 w-3" aria-hidden />
+      {source === "fattura" ? "Fattura" : "Banca"}
+    </Badge>
   );
 }
 
-function ConfidenceBadge({ band }: { band: "alta" | "media" | "bassa" }) {
+function ConfidenceBadge({ band }: { band: ConfidenceBand }) {
   if (band === "bassa") {
-    return <Badge className="bg-warning text-warning-foreground hover:bg-warning">Confidenza bassa</Badge>;
+    return <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[10px] uppercase tracking-wider">Confidenza bassa</Badge>;
   }
   if (band === "media") {
-    return <Badge variant="secondary">Confidenza media</Badge>;
+    return <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">Confidenza media</Badge>;
   }
-  return <Badge variant="outline">Confidenza alta</Badge>;
+  return <Badge variant="outline" className="text-[10px] uppercase tracking-wider">Confidenza alta</Badge>;
 }
 
-function Disclaimer() {
+function ValidatorBadge({ by }: { by: "AI" | "Operatore" }) {
+  const Icon = by === "AI" ? Sparkles : User;
   return (
-    <>
-      <Separator className="my-8" />
-      <p className="text-xs leading-relaxed text-muted-foreground">
-        <strong className="text-foreground">Primo margine</strong> = ricavi − costi variabili. I
-        costi fissi (affitto, stipendi, software di struttura) non sono ripartiti sul singolo
-        cliente. I costi non attribuibili restano in un secchiello comune. Solo le voci ad alta
-        confidenza o validate dall'operatore entrano nei totali pubblicati.
-      </p>
-      <div className="mt-6 flex justify-end">
-        <Button variant="ghost" size="sm" disabled>
-          Scarica PDF (prossimamente)
-        </Button>
-      </div>
-    </>
+    <Badge variant="outline" className="gap-1 text-[10px] font-medium uppercase tracking-wider">
+      <Icon className="h-3 w-3" aria-hidden />
+      {by === "AI" ? "Validato AI" : "Validato operatore"}
+    </Badge>
   );
 }

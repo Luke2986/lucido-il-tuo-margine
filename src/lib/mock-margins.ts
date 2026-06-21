@@ -1,5 +1,5 @@
-// Mock data per la dashboard margine (vista titolare).
-// In v0 il calcolo è: primo margine = ricavo - costi variabili attribuiti.
+// Mock data per la dashboard margine (vista titolare) — clienti italiani realistici.
+// In v0: primo margine = ricavo - costi variabili attribuiti. Costi fissi non ripartiti.
 
 export type ConfidenceBand = "alta" | "media" | "bassa";
 export type ValidationStatus = "validata" | "da_validare";
@@ -36,8 +36,7 @@ export interface CompanyReport {
   periodLabel: string;
   publishedAt: string;
   clients: ClientMargin[];
-  // copertura: quota di ricavo coperta da voci validate/alta confidenza
-  validatedRevenueShare: number;
+  validatedRevenueShare: number; // quota di ricavo coperta da validazione
 }
 
 export const mockReport: CompanyReport = {
@@ -48,7 +47,7 @@ export const mockReport: CompanyReport = {
   clients: [
     {
       id: "c-rossi",
-      name: "Rossi Industriale",
+      name: "Studio Rossi & Partners",
       kind: "cliente",
       revenue: 42000,
       variableCosts: 51800,
@@ -65,24 +64,24 @@ export const mockReport: CompanyReport = {
       ],
     },
     {
-      id: "c-meridiana",
-      name: "Meridiana Group",
+      id: "c-bianchi",
+      name: "Bianchi Eventi",
       kind: "cliente",
       revenue: 18500,
       variableCosts: 21200,
-      status: "da_validare",
+      status: "validata",
       revenues: [
-        { description: "Progetto rebranding", invoiceNumber: "2026/028", date: "2026-04-20", amount: 18500 },
+        { description: "Progetto rebranding evento", invoiceNumber: "2026/028", date: "2026-04-20", amount: 18500 },
       ],
       costs: [
-        { description: "Freelance design - Conti", counterparty: "Conti P.IVA", source: "fattura", amount: 14000, confidence: "media", validatedBy: "AI" },
+        { description: "Freelance design - Conti", counterparty: "Conti P.IVA", source: "fattura", amount: 14000, confidence: "alta", validatedBy: "Operatore" },
         { description: "Stampa cataloghi", counterparty: "Tipografia Sole", source: "fattura", amount: 5200, confidence: "alta", validatedBy: "Operatore" },
-        { description: "Spedizioni campioni", counterparty: "BRT", source: "banca", amount: 2000, confidence: "bassa", validatedBy: "AI" },
+        { description: "Spedizioni campioni", counterparty: "BRT", source: "banca", amount: 2000, confidence: "media", validatedBy: "AI" },
       ],
     },
     {
-      id: "c-aurora",
-      name: "Commessa Aurora – Comune di Pisa",
+      id: "c-prato",
+      name: "Comune di Prato",
       kind: "commessa",
       revenue: 31000,
       variableCosts: 14500,
@@ -98,15 +97,15 @@ export const mockReport: CompanyReport = {
       ],
     },
     {
-      id: "c-orsa",
-      name: "Orsa Maggiore S.p.A.",
+      id: "c-acme",
+      name: "Acme S.r.l.",
       kind: "cliente",
       revenue: 64000,
       variableCosts: 28000,
       status: "validata",
       revenues: [
         { description: "Retainer mensile (5 mesi)", invoiceNumber: "2026/002→/045", date: "2026-05-31", amount: 50000 },
-        { description: "Extra workshop", invoiceNumber: "2026/036", date: "2026-04-12", amount: 14000 },
+        { description: "Workshop straordinario", invoiceNumber: "2026/036", date: "2026-04-12", amount: 14000 },
       ],
       costs: [
         { description: "Senior consultant - Marchi", counterparty: "Marchi P.IVA", source: "fattura", amount: 22000, confidence: "alta", validatedBy: "Operatore" },
@@ -115,8 +114,8 @@ export const mockReport: CompanyReport = {
       ],
     },
     {
-      id: "c-velasca",
-      name: "Velasca Retail",
+      id: "c-technova",
+      name: "TechNova S.r.l.",
       kind: "cliente",
       revenue: 9800,
       variableCosts: 4200,
@@ -131,7 +130,7 @@ export const mockReport: CompanyReport = {
     },
     {
       id: "c-faro",
-      name: "Faro Logistica",
+      name: "Faro Logistica S.r.l.",
       kind: "cliente",
       revenue: 12000,
       variableCosts: 12600,
@@ -145,12 +144,28 @@ export const mockReport: CompanyReport = {
         { description: "Trasferte Bologna", counterparty: "Trenitalia", source: "banca", amount: 2000, confidence: "alta", validatedBy: "Operatore" },
       ],
     },
+    {
+      id: "c-velasca",
+      name: "Velasca Retail",
+      kind: "cliente",
+      revenue: 16400,
+      variableCosts: 11800,
+      status: "da_validare",
+      revenues: [
+        { description: "Consulenza vetrine Q2", invoiceNumber: "2026/038", date: "2026-05-08", amount: 16400 },
+      ],
+      costs: [
+        { description: "Freelance visual - Esposito", counterparty: "Esposito P.IVA", source: "fattura", amount: 7800, confidence: "bassa", validatedBy: "AI" },
+        { description: "Materiali allestimento", counterparty: "Vari", source: "banca", amount: 2500, confidence: "media", validatedBy: "AI" },
+        { description: "Trasferte Milano (2)", counterparty: "Trenitalia", source: "banca", amount: 1500, confidence: "alta", validatedBy: "Operatore" },
+      ],
+    },
   ],
 };
 
 export interface MarginRow extends ClientMargin {
   margin: number;
-  marginPct: number; // ratio 0-1; può essere negativo
+  marginPct: number; // ratio; può essere negativo
   isLoss: boolean;
 }
 
@@ -161,5 +176,4 @@ export const computeRows = (clients: ClientMargin[]): MarginRow[] =>
       const marginPct = c.revenue > 0 ? margin / c.revenue : 0;
       return { ...c, margin, marginPct, isLoss: margin < 0 };
     })
-    // peggiori in cima (default richiesto dalla spec)
-    .sort((a, b) => a.margin - b.margin);
+    .sort((a, b) => a.margin - b.margin); // peggiori in cima
