@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ImpostazioniRouteImport } from './routes/impostazioni'
 import { Route as AreaDatiRouteImport } from './routes/area-dati'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ImpostazioniRoute = ImpostazioniRouteImport.update({
+  id: '/impostazioni',
+  path: '/impostazioni',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AreaDatiRoute = AreaDatiRouteImport.update({
   id: '/area-dati',
   path: '/area-dati',
@@ -26,31 +32,42 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/area-dati': typeof AreaDatiRoute
+  '/impostazioni': typeof ImpostazioniRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/area-dati': typeof AreaDatiRoute
+  '/impostazioni': typeof ImpostazioniRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/area-dati': typeof AreaDatiRoute
+  '/impostazioni': typeof ImpostazioniRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/area-dati'
+  fullPaths: '/' | '/area-dati' | '/impostazioni'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/area-dati'
-  id: '__root__' | '/' | '/area-dati'
+  to: '/' | '/area-dati' | '/impostazioni'
+  id: '__root__' | '/' | '/area-dati' | '/impostazioni'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AreaDatiRoute: typeof AreaDatiRoute
+  ImpostazioniRoute: typeof ImpostazioniRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/impostazioni': {
+      id: '/impostazioni'
+      path: '/impostazioni'
+      fullPath: '/impostazioni'
+      preLoaderRoute: typeof ImpostazioniRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/area-dati': {
       id: '/area-dati'
       path: '/area-dati'
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaDatiRoute: AreaDatiRoute,
+  ImpostazioniRoute: ImpostazioniRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
