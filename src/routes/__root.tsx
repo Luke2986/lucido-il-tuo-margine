@@ -119,45 +119,23 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthGate />
-        <Toaster position="top-right" />
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
-function AuthGate() {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Caricamento…</p>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <AuthScreen />;
-  }
-
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
-        <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex h-12 items-center gap-2 border-b border-border bg-card px-3">
-            <SidebarTrigger aria-label="Apri o chiudi la barra laterale" />
-            <span className="text-xs font-medium text-muted-foreground">
-              Lucido · Controllo di gestione
-            </span>
-          </header>
-          <main className="flex-1">
-            <Outlet />
-          </main>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-background">
+          <AppSidebar />
+          <div className="flex min-h-screen flex-1 flex-col">
+            <header className="flex h-12 items-center gap-2 border-b border-border bg-card px-3">
+              <SidebarTrigger aria-label="Apri o chiudi la barra laterale" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Lucido · Controllo di gestione
+              </span>
+            </header>
+            <main className="flex-1">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+      <Toaster position="top-right" />
+    </QueryClientProvider>
   );
 }
