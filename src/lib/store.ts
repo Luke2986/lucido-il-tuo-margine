@@ -63,21 +63,7 @@ const newId = (prefix: string) =>
 
 // ---------- Mappers DB <-> dominio ----------
 
-type EntryRow = {
-  id: string;
-  entry_date: string;
-  description: string;
-  counterparty: string;
-  amount: number | string;
-  direction: Entry["direction"];
-  cost_type: Entry["costType"] | null;
-  client_id: string | null;
-  source: Entry["source"];
-  confidence: Entry["confidence"];
-  status: Entry["status"];
-  invoice_number: string | null;
-  validated_by: Entry["validatedBy"] | null;
-};
+type EntryRow = Database["public"]["Tables"]["entries"]["Row"];
 
 function rowToEntry(r: EntryRow): Entry {
   return {
@@ -97,7 +83,7 @@ function rowToEntry(r: EntryRow): Entry {
   };
 }
 
-function entryToRow(e: Entry): EntryRow {
+function entryToRow(e: Entry): EntryInsert {
   return {
     id: e.id,
     entry_date: e.date,
@@ -115,8 +101,8 @@ function entryToRow(e: Entry): EntryRow {
   };
 }
 
-function entryPatchToRow(patch: Partial<Entry>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
+function entryPatchToRow(patch: Partial<Entry>): EntryUpdate {
+  const out: EntryUpdate = {};
   if (patch.date !== undefined) out.entry_date = patch.date;
   if (patch.description !== undefined) out.description = patch.description;
   if (patch.counterparty !== undefined) out.counterparty = patch.counterparty;
