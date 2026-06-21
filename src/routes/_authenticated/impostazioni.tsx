@@ -262,7 +262,7 @@ function DataSection() {
     <SectionCard
       icon={Database}
       title="Gestione dati"
-      description="Tutti i dati sono salvati localmente sul tuo browser. Nessun backend."
+      description="Tutti i dati sono salvati nel database. Le azioni sotto riguardano la tua azienda."
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">

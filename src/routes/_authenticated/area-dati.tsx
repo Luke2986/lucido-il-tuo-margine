@@ -49,7 +49,7 @@ function AreaDatiPage() {
               Area dati
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Inserisci, modifica e importa le voci. Tutto è salvato localmente sul tuo browser.
+              Inserisci, modifica e importa le voci. Tutto è salvato nel database della tua azienda.
             </p>
           </div>
           <AlertDialog>
