@@ -29,9 +29,10 @@ function AreaDatiPage() {
   const [tab, setTab] = useState("voci");
   const reset = useLucidoStore((s) => s.resetToSeed);
 
-  // Idrata da localStorage al mount (no gate: lo store ha già il seed come default)
+  // Carica i dati dal DB al mount
   useEffect(() => {
-    try { void useLucidoStore.persist.rehydrate(); } catch {}
+    const s = useLucidoStore.getState();
+    if (!s.loaded && !s.loading) void s.loadAll();
   }, []);
 
 
