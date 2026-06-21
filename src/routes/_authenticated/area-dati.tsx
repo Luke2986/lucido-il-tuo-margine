@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ClientsManager } from "@/components/data-area/ClientsManager";
 import { EntriesEditor } from "@/components/data-area/EntriesEditor";
 import { ImportPanel } from "@/components/data-area/ImportPanel";
+import { FattureXmlImportPanel } from "@/components/data-area/FattureXmlImportPanel";
 import { useLucidoStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/area-dati")({
@@ -80,10 +81,12 @@ function AreaDatiPage() {
           <TabsList>
             <TabsTrigger value="voci">Editor voci</TabsTrigger>
             <TabsTrigger value="clienti">Clienti e commesse</TabsTrigger>
-            <TabsTrigger value="import">Import file</TabsTrigger>
+            <TabsTrigger value="fatture">Fatture XML</TabsTrigger>
+            <TabsTrigger value="import">Import Excel/CSV</TabsTrigger>
           </TabsList>
           <TabsContent value="voci" className="mt-6"><EntriesEditor /></TabsContent>
           <TabsContent value="clienti" className="mt-6"><ClientsManager /></TabsContent>
+          <TabsContent value="fatture" className="mt-6"><FattureXmlImportPanel /></TabsContent>
           <TabsContent value="import" className="mt-6"><ImportPanel /></TabsContent>
         </Tabs>
       </div>
