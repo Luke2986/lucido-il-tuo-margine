@@ -1,1 +1,4 @@
 project_id = "xzsjnzibyszhsjqvchee"
+
+[functions.classify]
+verify_jwt = true
