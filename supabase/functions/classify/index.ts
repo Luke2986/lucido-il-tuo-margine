@@ -1,6 +1,6 @@
-// Edge function "classify" — classificazione costi via Anthropic (Claude)
-// Chiamata diretta ad api.anthropic.com (NON usa il gateway Lovable AI).
-// Input: POST { companyId: string }. Richiede JWT utente (membership su companyId).
+// Edge function "classify" — classificazione costi via Lovable AI Gateway.
+// Usa LOVABLE_API_KEY (auto-provisionata da Lovable Cloud). Nessuna chiave esterna.
+// Input: POST { companyId }. Richiede JWT utente (membership su companyId).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const CORS = {
@@ -10,8 +10,8 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-6";
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MODEL = "google/gemini-2.5-flash";
 const BATCH_SIZE = 40;
 
 type CostType = "fisso" | "variabile" | "non_costo";
@@ -37,23 +37,29 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function callAnthropic(
+class RateLimitError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function callLovableAI(
   apiKey: string,
   system: string,
   userPayload: unknown,
 ): Promise<ClassifyItem[]> {
-  const res = await fetch(ANTHROPIC_URL, {
+  const res = await fetch(LOVABLE_AI_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
+      Authorization: `Bearer ${apiKey}`,
       "content-type": "application/json",
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 4096,
-      system,
       messages: [
+        { role: "system", content: system },
         {
           role: "user",
           content:
@@ -63,12 +69,18 @@ async function callAnthropic(
       ],
     }),
   });
+
+  if (res.status === 429 || res.status === 402) {
+    throw new RateLimitError(res.status, res.status === 402
+      ? "Crediti AI esauriti, aggiungi credito al workspace"
+      : "Limite AI raggiunto, riprova tra poco");
+  }
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`Anthropic ${res.status}: ${t}`);
+    throw new Error(`Lovable AI ${res.status}: ${t}`);
   }
   const data = await res.json();
-  const text: string = data?.content?.[0]?.text ?? "";
+  const text: string = data?.choices?.[0]?.message?.content ?? "";
   const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
   const start = cleaned.indexOf("[");
   const end = cleaned.lastIndexOf("]");
@@ -86,10 +98,10 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return json(
-        { error: "ANTHROPIC_API_KEY non configurata nei secret." },
+        { error: "LOVABLE_API_KEY non disponibile (Lovable Cloud non configurato)." },
         500,
       );
     }
@@ -199,8 +211,21 @@ Deno.serve(async (req) => {
       };
       let items: ClassifyItem[] = [];
       try {
-        items = await callAnthropic(ANTHROPIC_API_KEY, system, payload);
+        items = await callLovableAI(LOVABLE_API_KEY, system, payload);
       } catch (e) {
+        if (e instanceof RateLimitError) {
+          // Interrompi: rate limit globale, non ha senso continuare i batch
+          return json(
+            {
+              error: e.message,
+              ok: false,
+              classified,
+              skipped: skipped + (toClassify.length - i),
+              errors,
+            },
+            e.status,
+          );
+        }
         errors.push({ error: `Batch ${i}: ${(e as Error).message}` });
         skipped += batch.length;
         continue;
