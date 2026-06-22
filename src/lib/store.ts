@@ -121,6 +121,7 @@ function composeEntry(tx: TxRow, cls: ClsRow | null, thresholds: ConfidenceThres
     status,
     invoiceNumber: tx.invoice_number ?? undefined,
     validatedBy,
+    rationale: cls?.rationale ?? undefined,
   };
 }
 
@@ -561,7 +562,7 @@ function entryToClsInsert(e: Entry, t: ConfidenceThresholds): ClsInsert {
     confidence: conf,
     confidence_band: band,
     method: e.validatedBy === "AI" ? "ai" : "manuale",
-    rationale: "",
+    rationale: e.rationale ?? "",
     status,
     validated_by: e.validatedBy ?? null,
     validated_at: e.status === "validato" ? new Date().toISOString() : null,

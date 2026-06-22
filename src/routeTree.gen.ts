@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedRevisioneRouteImport } from './routes/_authenticated/revisione'
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
 import { Route as AuthenticatedAreaDatiRouteImport } from './routes/_authenticated/area-dati'
 
@@ -27,6 +28,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRevisioneRoute = AuthenticatedRevisioneRouteImport.update({
+  id: '/revisione',
+  path: '/revisione',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedImpostazioniRoute =
@@ -46,11 +52,13 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/area-dati': typeof AuthenticatedAreaDatiRoute
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/revisione': typeof AuthenticatedRevisioneRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/area-dati': typeof AuthenticatedAreaDatiRoute
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/revisione': typeof AuthenticatedRevisioneRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -59,19 +67,21 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/area-dati': typeof AuthenticatedAreaDatiRoute
   '/_authenticated/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/_authenticated/revisione': typeof AuthenticatedRevisioneRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/area-dati' | '/impostazioni'
+  fullPaths: '/' | '/auth' | '/area-dati' | '/impostazioni' | '/revisione'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/area-dati' | '/impostazioni' | '/'
+  to: '/auth' | '/area-dati' | '/impostazioni' | '/revisione' | '/'
   id:
     | '__root__'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/area-dati'
     | '/_authenticated/impostazioni'
+    | '/_authenticated/revisione'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
@@ -103,6 +113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/revisione': {
+      id: '/_authenticated/revisione'
+      path: '/revisione'
+      fullPath: '/revisione'
+      preLoaderRoute: typeof AuthenticatedRevisioneRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/impostazioni': {
       id: '/_authenticated/impostazioni'
       path: '/impostazioni'
@@ -123,12 +140,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAreaDatiRoute: typeof AuthenticatedAreaDatiRoute
   AuthenticatedImpostazioniRoute: typeof AuthenticatedImpostazioniRoute
+  AuthenticatedRevisioneRoute: typeof AuthenticatedRevisioneRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAreaDatiRoute: AuthenticatedAreaDatiRoute,
   AuthenticatedImpostazioniRoute: AuthenticatedImpostazioniRoute,
+  AuthenticatedRevisioneRoute: AuthenticatedRevisioneRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
@@ -142,3 +161,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

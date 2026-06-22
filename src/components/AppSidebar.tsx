@@ -26,7 +26,7 @@ type NavItem = {
 const allItems: NavItem[] = [
   { title: "Margine clienti", url: "/", icon: LineChart, enabled: true, group: "Titolare" },
   { title: "Area dati", url: "/area-dati", icon: Database, enabled: true, group: "Operatore" },
-  { title: "Revisione AI", url: "/revisione", icon: ShieldCheck, enabled: false, group: "Operatore" },
+  { title: "Revisione AI", url: "/revisione", icon: ShieldCheck, enabled: true, group: "Operatore" },
   { title: "Impostazioni", url: "/impostazioni", icon: Settings, enabled: true, group: "Operatore" },
 ];
 

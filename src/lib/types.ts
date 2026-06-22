@@ -28,6 +28,7 @@ export interface Entry {
   status: ValidationStatus;
   invoiceNumber?: string;
   validatedBy?: Validator;
+  rationale?: string; // motivazione AI ("perché questo numero")
 }
 
 // Riga aggregata derivata per la dashboard del titolare.
