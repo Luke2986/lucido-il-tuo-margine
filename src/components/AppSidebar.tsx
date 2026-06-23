@@ -31,11 +31,14 @@ const allItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const role = useLucidoStore((s) => s.role);
   const company = useLucidoStore((s) => s.company);
+  const handleNavClick = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   // Il titolare vede solo la schermata margine.
   const items = role === "owner"
