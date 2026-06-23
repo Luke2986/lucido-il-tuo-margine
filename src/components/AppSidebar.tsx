@@ -83,9 +83,9 @@ export function AppSidebar() {
                         className={item.enabled ? "" : "opacity-50 cursor-not-allowed"}
                       >
                         {item.enabled ? (
-                          <Link to={item.url} className="flex items-center gap-2">
+                          <Link to={item.url} onClick={handleNavClick} className="flex items-center gap-2">
                             <Icon className="h-4 w-4" />
-                            {!collapsed && <span>{item.title}</span>}
+                            {(!collapsed || isMobile) && <span>{item.title}</span>}
                           </Link>
                         ) : (
                           <div className="flex items-center gap-2">
