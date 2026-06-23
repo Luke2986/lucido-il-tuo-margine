@@ -35,17 +35,26 @@ function AuthenticatedLayout() {
   }, []);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
-        <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex h-12 items-center gap-2 border-b border-border bg-card px-3">
-            <SidebarTrigger aria-label="Apri o chiudi la barra laterale" />
-            <span className="text-xs font-medium text-muted-foreground">
+        <div className="flex min-h-screen flex-1 flex-col min-w-0">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:h-12">
+            <SidebarTrigger
+              aria-label="Apri o chiudi la barra laterale"
+              className="h-11 w-11 shrink-0 md:h-7 md:w-7"
+            />
+            <span className="hidden text-xs font-medium text-muted-foreground md:inline">
               Lucido · Controllo di gestione
             </span>
+            <span className="truncate text-sm font-semibold text-foreground md:hidden">
+              Lucido
+            </span>
+            <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground md:hidden">
+              Menu
+            </span>
           </header>
-          <main className="flex-1">
+          <main className="flex-1 min-w-0">
             <Outlet />
           </main>
         </div>
