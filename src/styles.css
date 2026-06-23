@@ -54,8 +54,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-
 :root {
+
   --radius: 0.625rem;
 
   --background: hsl(210 20% 99%);
