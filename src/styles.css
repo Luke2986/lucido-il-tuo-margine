@@ -101,8 +101,8 @@
 }
 
 @layer base {
-
   * {
+
     border-color: var(--color-border);
   }
 
