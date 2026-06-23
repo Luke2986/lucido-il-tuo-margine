@@ -119,18 +119,19 @@ function RevisioneAI() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Revisione AI</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Revisione AI</h1>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
             L'AI propone fisso/variabile/non-costo e l'attribuzione al cliente. Conferma o correggi
             prima di pubblicare. Nessun numero va al titolare senza la tua validazione.
           </p>
         </div>
-        <Button onClick={runClassify} disabled={running || !companyId}>
+        <Button onClick={runClassify} disabled={running || !companyId} className="shrink-0" size="sm">
           <Sparkles className="mr-1 h-4 w-4" />
-          {running ? "Classifico…" : "Classifica con AI"}
+          <span className="hidden sm:inline">{running ? "Classifico…" : "Classifica con AI"}</span>
+          <span className="sm:hidden">{running ? "…" : "AI"}</span>
         </Button>
       </div>
 
@@ -143,7 +144,7 @@ function RevisioneAI() {
         </div>
       ) : (
         <>
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               {queue.length} voci da validare · {selected.size} selezionate
             </p>
@@ -152,8 +153,9 @@ function RevisioneAI() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-md border border-border bg-card">
-            <table className="w-full min-w-[1000px] text-xs">
+          {/* Tabella su desktop (≥ md) */}
+          <div className="hidden md:block overflow-x-auto rounded-md border border-border bg-card">
+            <table className="w-full text-xs">
               <thead className="border-b border-border bg-secondary/40 text-[10px] uppercase text-muted-foreground">
                 <tr>
                   <th className="w-8 px-2 py-2">
@@ -165,7 +167,7 @@ function RevisioneAI() {
                   </th>
                   <th className="px-2 py-2 text-left font-medium">Voce</th>
                   <th className="px-2 py-2 text-right font-medium">Importo</th>
-                  <th className="px-2 py-2 text-left font-medium">Confidenza</th>
+                  <th className="px-2 py-2 text-left font-medium">Conf.</th>
                   <th className="px-2 py-2 text-left font-medium">Tipo</th>
                   <th className="px-2 py-2 text-left font-medium">Attribuzione</th>
                   <th className="px-2 py-2 text-left font-medium">Motivazione AI</th>
@@ -178,13 +180,13 @@ function RevisioneAI() {
                     <td className="px-2 py-2">
                       <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggle(e.id)} />
                     </td>
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2 min-w-[180px]">
                       <div className="font-medium text-foreground">{e.description}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {e.counterparty} · {e.date} · fonte {e.source}
                       </div>
                     </td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatEur(e.amount)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums whitespace-nowrap">{formatEur(e.amount)}</td>
                     <td className="px-2 py-2">
                       <ConfidenceBadge band={e.confidence} />
                     </td>
@@ -193,7 +195,7 @@ function RevisioneAI() {
                         value={e.costType ?? ""}
                         onValueChange={(v) => updateEntry(e.id, { costType: v as CostType })}
                       >
-                        <SelectTrigger className="h-7 w-32 text-xs">
+                        <SelectTrigger className="h-7 w-28 text-xs">
                           <SelectValue placeholder="—" />
                         </SelectTrigger>
                         <SelectContent>
@@ -210,7 +212,7 @@ function RevisioneAI() {
                           updateEntry(e.id, { clientId: v === NO_CLIENT ? undefined : v })
                         }
                       >
-                        <SelectTrigger className="h-7 w-44 text-xs">
+                        <SelectTrigger className="h-7 w-40 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -242,6 +244,98 @@ function RevisioneAI() {
               </tbody>
             </table>
           </div>
+
+          {/* Card stack su mobile (< md) */}
+          <ul className="space-y-3 md:hidden">
+            {queue.map((e) => (
+              <li key={e.id} className="rounded-md border border-border bg-card p-3">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    className="mt-1 shrink-0"
+                    checked={selected.has(e.id)}
+                    onCheckedChange={() => toggle(e.id)}
+                    aria-label="Seleziona voce"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground break-words">
+                          {e.description}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground break-words">
+                          {e.counterparty} · {e.date} · fonte {e.source}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold tabular-nums whitespace-nowrap">
+                          {formatEur(e.amount)}
+                        </div>
+                        <div className="mt-1">
+                          <ConfidenceBadge band={e.confidence} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      <label className="block">
+                        <span className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">Tipo</span>
+                        <Select
+                          value={e.costType ?? ""}
+                          onValueChange={(v) => updateEntry(e.id, { costType: v as CostType })}
+                        >
+                          <SelectTrigger className="h-9 w-full text-sm">
+                            <SelectValue placeholder="—" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fisso">Fisso</SelectItem>
+                            <SelectItem value="variabile">Variabile</SelectItem>
+                            <SelectItem value="non_costo">Non-costo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">Attribuzione</span>
+                        <Select
+                          value={e.clientId ?? NO_CLIENT}
+                          onValueChange={(v) =>
+                            updateEntry(e.id, { clientId: v === NO_CLIENT ? undefined : v })
+                          }
+                        >
+                          <SelectTrigger className="h-9 w-full text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_CLIENT}>— Non attribuito —</SelectItem>
+                            {clients.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </label>
+                    </div>
+
+                    {e.rationale ? (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground/70">Motivazione AI:</span>{" "}
+                        {e.rationale}
+                      </p>
+                    ) : null}
+
+                    <Button
+                      className="mt-3 w-full"
+                      size="sm"
+                      onClick={() => confirm(e.id)}
+                      disabled={!e.costType}
+                    >
+                      <Check className="mr-1 h-4 w-4" /> Conferma
+                    </Button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
 
           <p className="mt-3 text-xs text-muted-foreground">
             Confermando, la voce passa a <strong>validata</strong> (validata dall'operatore) ed entra
