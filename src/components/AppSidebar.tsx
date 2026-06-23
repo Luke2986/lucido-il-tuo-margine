@@ -31,11 +31,14 @@ const allItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const role = useLucidoStore((s) => s.role);
   const company = useLucidoStore((s) => s.company);
+  const handleNavClick = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   // Il titolare vede solo la schermata margine.
   const items = role === "owner"
@@ -80,9 +83,9 @@ export function AppSidebar() {
                         className={item.enabled ? "" : "opacity-50 cursor-not-allowed"}
                       >
                         {item.enabled ? (
-                          <Link to={item.url} className="flex items-center gap-2">
+                          <Link to={item.url} onClick={handleNavClick} className="flex items-center gap-2">
                             <Icon className="h-4 w-4" />
-                            {!collapsed && <span>{item.title}</span>}
+                            {(!collapsed || isMobile) && <span>{item.title}</span>}
                           </Link>
                         ) : (
                           <div className="flex items-center gap-2">
