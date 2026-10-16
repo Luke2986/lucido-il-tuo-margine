@@ -1,6 +1,7 @@
 {
   "name": "lucido-il-tuo-margine",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "sideEffects": false,
   "type": "module",
   "scripts": {

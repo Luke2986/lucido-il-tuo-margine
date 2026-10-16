@@ -13,7 +13,7 @@ supabase_project_ref: 'xzsjnzibyszhsjqvchee'
 
 # Project Context for AI Agents — Lucido
 
-_Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codice in questo progetto. Focus su dettagli non ovvi. Prototipo v0 brownfield nato su Lovable Cloud, in migrazione verso Vercel + Supabase proprio. Codice e commenti in italiano; commit/PR in inglese o italiano ma in stato funzionante._
+_Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codice in questo progetto. Focus su dettagli non ovvi. Prototipo v0 brownfield nato su Lovable, ora indipendente (Vercel/Replit + Supabase proprio). Licenza PolyForm Noncommercial 1.0.0. Codice e commenti in italiano; commit/PR in inglese o italiano ma in stato funzionante._
 
 ---
 
@@ -25,10 +25,10 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 - **Styling:** Tailwind CSS **v4** (`@tailwindcss/vite`), CSS variables, entry `src/styles.css`, `tw-animate-css`.
 - **Build:** Vite `^8` con plugin espliciti in `vite.config.ts`; Nitro (beta) in build: preset `vercel` se `VERCEL` è definita, altrimenti `node-server` (`bun run start`).
 - **State:** Zustand `^5` (store unico `src/lib/store.ts`). Data fetching: TanStack Query `^5`.
-- **Backend:** Supabase (`@supabase/supabase-js ^2.108`); edge functions Deno. In migrazione da Lovable Cloud a progetto Supabase proprio.
+- **Backend:** Supabase (`@supabase/supabase-js ^2.108`); edge functions Deno. Setup completo nel `README.md`.
 - **Validazione:** Zod `^3`. Form: react-hook-form + `@hookform/resolvers`.
 - **Altro:** recharts (grafici), date-fns, xlsx (import Excel/fatture), sonner (toast).
-- **Lingua:** TypeScript `^5.8` strict. Template Lovable: `tanstack_start_ts_2026-06-17`.
+- **Lingua:** TypeScript `^5.8` strict.
 
 ## Critical Implementation Rules
 
@@ -88,8 +88,8 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 
 ### Development Workflow Rules
 
-- **Lovable sync (vincoli da `AGENTS.md`):** NON force-push, rebase, amend o squash di history già pushata (riscrive la storia lato Lovable → perdita cronologia). I commit sul branch connesso si sincronizzano nell'editor Lovable: tieni **sempre il branch in stato funzionante**.
-- **Regola utente di progetto:** tutte le modifiche passano via **git diretto sul repo GitHub** (niente messaggi all'agente Lovable).
+- **Git:** NON force-push, rebase, amend o squash di history già pushata. `main` alimenta Replit e Vercel: tienilo **sempre in stato funzionante**, lavora su branch per modifiche grandi.
+- **Compatibilità temporanea:** `isNotMigrated()` in `store.ts` e il fallback `LOVABLE_API_KEY` in `classify` servono solo finché esiste un DB senza la migrazione `20261016120000`. Rimuovili quando tutti gli ambienti puntano al Supabase migrato.
 - **Supply-chain guard** (`bunfig.toml`): `minimumReleaseAge = 86400` (salta versioni pubblicate da <24h). Nessuna eccezione: **chiedi conferma all'utente** prima di aggiungere `minimumReleaseAgeExcludes`.
 - **Env vars:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (+ varianti `VITE_*` per il client). `SUPABASE_SERVICE_ROLE_KEY` solo server/edge. `.env`, `.dev.vars`, `*.local` sono gitignorati — non committarli e non esporre la service role al client.
 
@@ -102,7 +102,7 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 - ❌ NON dimenticare di salvare la `classification` insieme a ogni voce (costo o ricavo).
 - ❌ NON fidarsi ciecamente dell'output dell'edge AI: valida `cost_type`, `client_id` e clampa `confidence` (già fatto in `classify/index.ts` — preservalo).
 - ❌ NON forzare `amount` positivo: le note di credito sono negative (il segno economico è `direction` × segno di `amount`).
-- ❌ NON riscrivere storia git pushata (vincolo Lovable).
+- ❌ NON riscrivere storia git pushata.
 
 ---
 
