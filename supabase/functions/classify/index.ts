@@ -1,6 +1,6 @@
-// Edge function "classify" — classificazione costi via Lovable AI Gateway.
-// Usa LOVABLE_API_KEY (auto-provisionata da Lovable Cloud). Nessuna chiave esterna.
-// Input: POST { companyId }. Richiede JWT utente (membership su companyId).
+// Edge function "classify" — classificazione costi con un LLM via API compatibile OpenAI.
+// Secret: AI_API_KEY (default: Google Gemini). Opzionali AI_API_URL e AI_MODEL per cambiare provider.
+// Input: POST { companyId }. Richiede JWT utente (ruolo operator su companyId).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const CORS = {
@@ -10,8 +10,29 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const GEMINI_OPENAI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+
+interface AiConfig {
+  url: string;
+  key: string;
+  model: string;
+}
+
+function aiConfig(): AiConfig | null {
+  const key = Deno.env.get("AI_API_KEY");
+  if (key) {
+    return {
+      url: Deno.env.get("AI_API_URL") ?? GEMINI_OPENAI_URL,
+      key,
+      model: Deno.env.get("AI_MODEL") ?? "gemini-2.5-flash",
+    };
+  }
+  // Solo finché il progetto gira ancora su Lovable Cloud: rimuovere dopo il passaggio al Supabase proprio.
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  if (lovableKey) return { url: LOVABLE_AI_URL, key: lovableKey, model: "google/gemini-2.5-flash" };
+  return null;
+}
 const BATCH_SIZE = 40;
 
 type CostType = "fisso" | "variabile" | "non_costo";
@@ -45,19 +66,19 @@ class RateLimitError extends Error {
   }
 }
 
-async function callLovableAI(
-  apiKey: string,
+async function callAI(
+  ai: AiConfig,
   system: string,
   userPayload: unknown,
 ): Promise<ClassifyItem[]> {
-  const res = await fetch(LOVABLE_AI_URL, {
+  const res = await fetch(ai.url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${ai.key}`,
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: ai.model,
       messages: [
         { role: "system", content: system },
         {
@@ -72,12 +93,12 @@ async function callLovableAI(
 
   if (res.status === 429 || res.status === 402) {
     throw new RateLimitError(res.status, res.status === 402
-      ? "Crediti AI esauriti, aggiungi credito al workspace"
+      ? "Crediti AI esauriti"
       : "Limite AI raggiunto, riprova tra poco");
   }
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`Lovable AI ${res.status}: ${t}`);
+    throw new Error(`AI ${res.status}: ${t}`);
   }
   const data = await res.json();
   const text: string = data?.choices?.[0]?.message?.content ?? "";
@@ -98,12 +119,9 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return json(
-        { error: "LOVABLE_API_KEY non disponibile (Lovable Cloud non configurato)." },
-        500,
-      );
+    const ai = aiConfig();
+    if (!ai) {
+      return json({ error: "Secret AI_API_KEY non configurato sull'edge function." }, 500);
     }
 
     const authHeader = req.headers.get("Authorization") ?? "";
@@ -129,15 +147,15 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Verifica membership
+    // Solo l'operatore scrive classificazioni (il titolare è in sola lettura).
     const { data: mem, error: memErr } = await svc
       .from("memberships")
-      .select("user_id")
+      .select("role")
       .eq("company_id", companyId)
       .eq("user_id", userId)
       .maybeSingle();
     if (memErr) return json({ error: memErr.message }, 500);
-    if (!mem) return json({ error: "Forbidden" }, 403);
+    if (!mem || mem.role !== "operator") return json({ error: "Forbidden" }, 403);
 
     // Carica company, settings, clients
     const [{ data: company }, { data: settings }, { data: clients }] =
@@ -211,7 +229,7 @@ Deno.serve(async (req) => {
       };
       let items: ClassifyItem[] = [];
       try {
-        items = await callLovableAI(LOVABLE_API_KEY, system, payload);
+        items = await callAI(ai, system, payload);
       } catch (e) {
         if (e instanceof RateLimitError) {
           // Interrompi: rate limit globale, non ha senso continuare i batch
@@ -231,7 +249,19 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const batchIds = new Set(batch.map((b) => b.id));
+      // Non sovrascrivere voci validate dall'operatore mentre l'AI lavorava.
+      const { data: nowValidated, error: nvErr } = await svc
+        .from("classifications")
+        .select("transaction_id")
+        .in("transaction_id", batch.map((b) => b.id))
+        .in("status", ["validata", "override"]);
+      if (nvErr) {
+        errors.push({ error: `Batch ${i}: ${nvErr.message}` });
+        skipped += batch.length;
+        continue;
+      }
+      const locked = new Set((nowValidated ?? []).map((r) => r.transaction_id));
+      const batchIds = new Set(batch.map((b) => b.id).filter((id) => !locked.has(id)));
       const rows = [];
       for (const it of items) {
         if (!it || !batchIds.has(it.transaction_id)) {

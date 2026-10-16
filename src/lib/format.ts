@@ -29,6 +29,9 @@ const dateFormatter = new Intl.DateTimeFormat("it-IT", {
 export const formatEur = (value: number, withCents = false): string =>
   (withCents ? eurFormatterCents : eurFormatter).format(value);
 
+export const formatSignedEur = (value: number, withCents = false): string =>
+  `${value < 0 ? "−" : "+"}${formatEur(Math.abs(value), withCents)}`;
+
 export const formatPercent = (ratio: number): string => percentFormatter.format(ratio);
 
 export const formatDate = (value: Date | string | null | undefined): string => {

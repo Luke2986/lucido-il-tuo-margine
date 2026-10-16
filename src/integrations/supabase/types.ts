@@ -127,6 +127,7 @@ export type Database = {
           period_label: string
           published_at: string | null
           sector: string
+          seeded_at: string | null
           status: Database["public"]["Enums"]["company_status"]
           updated_at: string
           vat_number: string
@@ -138,6 +139,7 @@ export type Database = {
           period_label?: string
           published_at?: string | null
           sector?: string
+          seeded_at?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           updated_at?: string
           vat_number?: string
@@ -149,6 +151,7 @@ export type Database = {
           period_label?: string
           published_at?: string | null
           sector?: string
+          seeded_at?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           updated_at?: string
           vat_number?: string
@@ -343,6 +346,13 @@ export type Database = {
       is_member: {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
+      }
+      set_my_role: {
+        Args: {
+          _company_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
       }
     }
     Enums: {

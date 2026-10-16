@@ -149,8 +149,8 @@ function SignupForm({ onDone }: { onDone: () => void }) {
         {busy ? "Creazione…" : "Crea account"}
       </Button>
       <p className="text-[11px] text-muted-foreground">
-        Diventerai automaticamente operatore dell'azienda di esempio Studio Marini, così puoi
-        provare tutto subito.
+        Riceverai una tua azienda con i dati di esempio di Studio Marini, così puoi provare tutto
+        subito.
       </p>
     </form>
   );

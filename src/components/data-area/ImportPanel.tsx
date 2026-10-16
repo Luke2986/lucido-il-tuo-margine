@@ -44,9 +44,11 @@ export function ImportPanel() {
   const handleFile = async (file: File) => {
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array", cellDates: true });
+      // Valori grezzi: numeri e date Excel restano numeri (niente formattazione all'americana),
+      // i CSV restano testo e li interpretano parseAmount/parseDate in formato italiano.
+      const wb = XLSX.read(buf, { type: "array", raw: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: "", raw: false });
+      const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: "", raw: true });
       if (json.length === 0) {
         toast.error("Il file è vuoto.");
         return;
@@ -278,29 +280,40 @@ function buildEntry(row: Row, m: Mapping, defaultClient: string): Omit<Entry, "i
 }
 
 function parseDate(v: unknown): string {
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
-  const s = String(v ?? "").trim();
-  if (!s) return new Date().toISOString().slice(0, 10);
-  // gg/mm/aaaa
-  const it = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
-  if (it) {
-    const [, d, mo, y] = it;
-    const yyyy = y.length === 2 ? `20${y}` : y;
-    return `${yyyy}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  const today = new Date().toISOString().slice(0, 10);
+  if (typeof v === "number") {
+    // Seriale Excel: giorni dal 30/12/1899.
+    const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 86_400_000);
+    return isoDate(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()) ?? today;
   }
-  const dt = new Date(s);
-  if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
-  return new Date().toISOString().slice(0, 10);
+  if (v instanceof Date) return isoDate(v.getFullYear(), v.getMonth() + 1, v.getDate()) ?? today;
+  const s = String(v ?? "").trim();
+  if (!s) return today;
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return isoDate(Number(iso[1]), Number(iso[2]), Number(iso[3])) ?? today;
+  // gg/mm/aaaa
+  const it = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
+  if (it) {
+    const y = it[3].length === 2 ? 2000 + Number(it[3]) : Number(it[3]);
+    return isoDate(y, Number(it[2]), Number(it[1])) ?? today;
+  }
+  return today;
+}
+
+function isoDate(y: number, m: number, d: number): string | null {
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 function parseAmount(v: unknown): number {
   if (typeof v === "number") return v;
-  let s = String(v ?? "").trim();
+  let s = String(v ?? "").trim().replace(/[^\d,.-]/g, "");
   if (!s) return 0;
-  // formato it: 1.234,56 → 1234.56
-  s = s.replace(/[^\d,.\-]/g, "");
-  if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
-  else if (s.includes(",")) s = s.replace(",", ".");
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  if (lastComma > lastDot) s = s.replace(/\./g, "").replace(",", "."); // 1.234,56
+  else if (lastComma >= 0) s = s.replace(/,/g, ""); // 1,234.56
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ""); // 1.234 (migliaia)
   const n = Number(s);
   return isNaN(n) ? 0 : n;
 }

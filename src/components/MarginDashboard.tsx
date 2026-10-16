@@ -13,7 +13,7 @@ import {
 import { useLucidoStore, computeMarginRows, computeValidatedRevenueShare } from "@/lib/store";
 import { useHydratedStore } from "@/lib/use-store";
 import type { MarginRow, ConfidenceBand, Entry } from "@/lib/types";
-import { formatDate, formatEur, formatPercent } from "@/lib/format";
+import { formatDate, formatEur, formatPercent, formatSignedEur } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
@@ -386,7 +386,7 @@ function RevenueLineItem({ entry }: { entry: Entry }) {
             )}
           </div>
         </div>
-        <span className="tabular shrink-0 text-positive">+{formatEur(entry.amount, true)}</span>
+        <span className="tabular shrink-0 text-positive">{formatSignedEur(entry.amount, true)}</span>
       </div>
     </li>
   );
@@ -410,7 +410,7 @@ function CostLineItem({ entry }: { entry: Entry }) {
             )}
           </div>
         </div>
-        <span className="tabular shrink-0 text-foreground">−{formatEur(entry.amount, true)}</span>
+        <span className="tabular shrink-0 text-foreground">{formatSignedEur(-entry.amount, true)}</span>
       </div>
     </li>
   );

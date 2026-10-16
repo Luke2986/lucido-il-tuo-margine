@@ -1,7 +1,8 @@
 // Store Zustand legato a Supabase con autenticazione e ruoli.
 // Lavora sull'azienda corrente (presa dalla prima membership dell'utente
 // loggato). Mantiene il modello UI `Entry` come vista compatta in memoria
-// ma salva sul DB nelle tabelle transactions + classifications.
+// ma salva sul DB nelle tabelle transactions + classifications (una per voce,
+// costi e ricavi: per i ricavi conserva lo stato di validazione).
 
 import { create } from "zustand";
 import { toast } from "sonner";
@@ -103,8 +104,10 @@ function reportError(action: string, error: unknown) {
 
 function composeEntry(tx: TxRow, cls: ClsRow | null, thresholds: ConfidenceThresholds): Entry {
   const isCost = tx.direction === "costo";
-  const status: ValidationStatus =
-    cls && (cls.status === "validata" || cls.status === "override") ? "validato" : isCost ? "da_validare" : "validato";
+  // Le voci senza classification sono righe precedenti: i ricavi erano considerati validati.
+  const status: ValidationStatus = cls
+    ? cls.status === "validata" || cls.status === "override" ? "validato" : "da_validare"
+    : isCost ? "da_validare" : "validato";
   const validatedBy: Validator | undefined = cls?.validated_by ?? (isCost ? undefined : "Operatore");
   const band: ConfidenceBand = cls ? cls.confidence_band : "alta";
   return {
@@ -117,7 +120,7 @@ function composeEntry(tx: TxRow, cls: ClsRow | null, thresholds: ConfidenceThres
     costType: cls?.cost_type ?? undefined,
     clientId: (cls?.client_id ?? tx.client_id) ?? undefined,
     source: tx.source,
-    confidence: isCost ? band : "alta",
+    confidence: band,
     status,
     invoiceNumber: tx.invoice_number ?? undefined,
     validatedBy,
@@ -185,12 +188,18 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
       const companyId = memRes.data.company_id;
       const role = memRes.data.role as AppRole;
 
+      if (role === "operator") {
+        const seededRes = await supabase.from("companies").select("seeded_at").eq("id", companyId).maybeSingle();
+        if (seededRes.error) throw seededRes.error;
+        if (seededRes.data && !seededRes.data.seeded_at) await seedCompany(companyId);
+      }
+
       const [companyRes, settingsRes, clientsRes, txRes, clsRes] = await Promise.all([
         supabase.from("companies").select("*").eq("id", companyId).maybeSingle(),
         supabase.from("settings").select("*").eq("company_id", companyId).maybeSingle(),
         supabase.from("clients").select("*").eq("company_id", companyId).order("name"),
         supabase.from("transactions").select("*").eq("company_id", companyId).order("entry_date", { ascending: false }),
-        supabase.from("classifications").select("*"),
+        supabase.from("classifications").select("*, transactions!inner(company_id)").eq("transactions.company_id", companyId),
       ]);
       if (companyRes.error) throw companyRes.error;
       if (settingsRes.error) throw settingsRes.error;
@@ -205,7 +214,7 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
         : { ...SEED_THRESHOLDS };
 
       const clsByTx = new Map<string, ClsRow>();
-      for (const row of clsRes.data ?? []) clsByTx.set(row.transaction_id, row as ClsRow);
+      for (const { transactions: _tx, ...row } of clsRes.data ?? []) clsByTx.set(row.transaction_id, row);
 
       set({
         userId: user.id,
@@ -271,11 +280,7 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
     if (!userId || !companyId) return;
     const prev = get().role;
     set({ role });
-    const { error } = await supabase
-      .from("memberships")
-      .update({ role })
-      .eq("user_id", userId)
-      .eq("company_id", companyId);
+    const { error } = await supabase.rpc("set_my_role", { _company_id: companyId, _role: role });
     if (error) {
       set({ role: prev });
       reportError("cambio ruolo", error);
@@ -368,13 +373,9 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
         const txRows: TxInsert[] = created.map((c) => entryToTxInsert(companyId, c));
         const { error: txErr } = await supabase.from("transactions").insert(txRows);
         if (txErr) throw txErr;
-        const clsRows: ClsInsert[] = created
-          .filter((c) => c.direction === "costo")
-          .map((c) => entryToClsInsert(c, thresholds));
-        if (clsRows.length > 0) {
-          const { error: clsErr } = await supabase.from("classifications").insert(clsRows);
-          if (clsErr) throw clsErr;
-        }
+        const clsRows: ClsInsert[] = created.map((c) => entryToClsInsert(c, thresholds));
+        const { error: clsErr } = await supabase.from("classifications").insert(clsRows);
+        if (clsErr) throw clsErr;
       } catch (error) {
         const ids = new Set(created.map((c) => c.id));
         set((s) => ({ entries: s.entries.filter((x) => !ids.has(x.id)) }));
@@ -398,18 +399,10 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
           const { error } = await supabase.from("transactions").update(txPatch).eq("id", id);
           if (error) throw error;
         }
-        // Aggiorna/crea classification se è (o diventa) costo
-        const becameCost = next.direction === "costo";
-        if (becameCost) {
-          const clsRow = entryToClsInsert(next, thresholds);
-          const { error } = await supabase
-            .from("classifications")
-            .upsert(clsRow, { onConflict: "transaction_id" });
-          if (error) throw error;
-        } else if (target.direction === "costo" && next.direction === "ricavo") {
-          // Cambio costo→ricavo: elimina classification
-          await supabase.from("classifications").delete().eq("transaction_id", id);
-        }
+        const { error } = await supabase
+          .from("classifications")
+          .upsert(entryToClsInsert(next, thresholds), { onConflict: "transaction_id" });
+        if (error) throw error;
       } catch (error) {
         set({ entries: prev });
         reportError("modifica voce", error);
@@ -443,59 +436,10 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
   },
 
   resetToSeed: async () => {
-    const { companyId, thresholds } = get();
+    const { companyId } = get();
     if (!companyId) return;
     try {
-      // Cancella tutto della company corrente
-      const delTx = await supabase.from("transactions").delete().eq("company_id", companyId);
-      if (delTx.error) throw delTx.error;
-      const delC = await supabase.from("clients").delete().eq("company_id", companyId);
-      if (delC.error) throw delC.error;
-
-      // Aggiorna anagrafica
-      const upC = await supabase.from("companies").update({
-        name: SEED_COMPANY.name,
-        vat_number: SEED_COMPANY.vatNumber,
-        sector: SEED_COMPANY.sector,
-        period_label: SEED_COMPANY.periodLabel,
-        published_at: SEED_COMPANY.publishedAt || null,
-        status: "pubblicata",
-      }).eq("id", companyId);
-      if (upC.error) throw upC.error;
-
-      const upS = await supabase.from("settings").upsert(
-        { company_id: companyId, threshold_high: SEED_THRESHOLDS.high, threshold_medium: SEED_THRESHOLDS.medium },
-        { onConflict: "company_id" },
-      );
-      if (upS.error) throw upS.error;
-
-      // Mapping id legacy → uuid
-      const idMap = new Map<string, string>();
-      const clientRows: ClientInsert[] = SEED_CLIENTS.map((c) => {
-        const uid = newId();
-        idMap.set(c.id, uid);
-        return { id: uid, company_id: companyId, name: c.name, kind: c.kind };
-      });
-      const insC = await supabase.from("clients").insert(clientRows);
-      if (insC.error) throw insC.error;
-
-      // Entries → tx + cls
-      const entries: Entry[] = SEED_ENTRIES.map((e) => ({
-        ...e,
-        id: newId(),
-        clientId: e.clientId ? idMap.get(e.clientId) : undefined,
-      }));
-      const txRows = entries.map((e) => entryToTxInsert(companyId, e));
-      const insT = await supabase.from("transactions").insert(txRows);
-      if (insT.error) throw insT.error;
-      const clsRows = entries
-        .filter((e) => e.direction === "costo")
-        .map((e) => entryToClsInsert(e, thresholds));
-      if (clsRows.length > 0) {
-        const insCls = await supabase.from("classifications").insert(clsRows);
-        if (insCls.error) throw insCls.error;
-      }
-
+      await seedCompany(companyId);
       await get().loadAll();
     } catch (error) {
       reportError("ripristino dati di esempio", error);
@@ -523,6 +467,51 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
 
 // ---------- Helpers di persistenza ----------
 
+// Sostituisce i dati dell'azienda con il dataset di esempio.
+async function seedCompany(companyId: string) {
+  const delTx = await supabase.from("transactions").delete().eq("company_id", companyId);
+  if (delTx.error) throw delTx.error;
+  const delC = await supabase.from("clients").delete().eq("company_id", companyId);
+  if (delC.error) throw delC.error;
+
+  const upC = await supabase.from("companies").update({
+    name: SEED_COMPANY.name,
+    vat_number: SEED_COMPANY.vatNumber,
+    sector: SEED_COMPANY.sector,
+    period_label: SEED_COMPANY.periodLabel,
+    published_at: SEED_COMPANY.publishedAt || null,
+    status: "pubblicata",
+    seeded_at: new Date().toISOString(),
+  }).eq("id", companyId);
+  if (upC.error) throw upC.error;
+
+  const upS = await supabase.from("settings").upsert(
+    { company_id: companyId, threshold_high: SEED_THRESHOLDS.high, threshold_medium: SEED_THRESHOLDS.medium },
+    { onConflict: "company_id" },
+  );
+  if (upS.error) throw upS.error;
+
+  // Mapping id legacy → uuid
+  const idMap = new Map<string, string>();
+  const clientRows: ClientInsert[] = SEED_CLIENTS.map((c) => {
+    const uid = newId();
+    idMap.set(c.id, uid);
+    return { id: uid, company_id: companyId, name: c.name, kind: c.kind };
+  });
+  const insC = await supabase.from("clients").insert(clientRows);
+  if (insC.error) throw insC.error;
+
+  const entries: Entry[] = SEED_ENTRIES.map((e) => ({
+    ...e,
+    id: newId(),
+    clientId: e.clientId ? idMap.get(e.clientId) : undefined,
+  }));
+  const insT = await supabase.from("transactions").insert(entries.map((e) => entryToTxInsert(companyId, e)));
+  if (insT.error) throw insT.error;
+  const insCls = await supabase.from("classifications").insert(entries.map((e) => entryToClsInsert(e, SEED_THRESHOLDS)));
+  if (insCls.error) throw insCls.error;
+}
+
 function entryToTxInsert(companyId: string, e: Entry): TxInsert {
   return {
     id: e.id,
@@ -545,9 +534,9 @@ function entryToTxUpdate(patch: Partial<Entry>): TxUpdate {
   if (patch.counterparty !== undefined) out.counterparty = patch.counterparty;
   if (patch.amount !== undefined) out.amount = patch.amount;
   if (patch.direction !== undefined) out.direction = patch.direction;
-  if (patch.clientId !== undefined) out.client_id = patch.clientId ?? null;
+  if ("clientId" in patch) out.client_id = patch.clientId ?? null;
   if (patch.source !== undefined) out.source = patch.source;
-  if (patch.invoiceNumber !== undefined) out.invoice_number = patch.invoiceNumber ?? null;
+  if ("invoiceNumber" in patch) out.invoice_number = patch.invoiceNumber ?? null;
   return out;
 }
 
@@ -557,7 +546,7 @@ function entryToClsInsert(e: Entry, t: ConfidenceThresholds): ClsInsert {
   const status = e.status === "validato" ? "validata" : "ai_proposta";
   return {
     transaction_id: e.id,
-    cost_type: e.costType ?? null,
+    cost_type: e.direction === "costo" ? (e.costType ?? null) : null,
     client_id: e.clientId ?? null,
     confidence: conf,
     confidence_band: band,
@@ -572,10 +561,8 @@ function entryToClsInsert(e: Entry, t: ConfidenceThresholds): ClsInsert {
 async function persistEntry(companyId: string, e: Entry, thresholds: ConfidenceThresholds) {
   const { error: txErr } = await supabase.from("transactions").insert(entryToTxInsert(companyId, e));
   if (txErr) throw txErr;
-  if (e.direction === "costo") {
-    const { error: clsErr } = await supabase.from("classifications").insert(entryToClsInsert(e, thresholds));
-    if (clsErr) throw clsErr;
-  }
+  const { error: clsErr } = await supabase.from("classifications").insert(entryToClsInsert(e, thresholds));
+  if (clsErr) throw clsErr;
 }
 
 // ---------- Selettori ----------

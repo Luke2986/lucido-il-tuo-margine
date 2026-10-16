@@ -14,7 +14,7 @@ import { useLucidoStore } from "@/lib/store";
 import type {
   ConfidenceBand, CostType, Entry, EntryDirection, EntrySource, ValidationStatus,
 } from "@/lib/types";
-import { formatEur } from "@/lib/format";
+import { formatEur, formatSignedEur } from "@/lib/format";
 
 const DIRECTIONS: { value: EntryDirection; label: string }[] = [
   { value: "ricavo", label: "Ricavo" },
@@ -213,13 +213,12 @@ function EntryRow({
           <Input
             type="number"
             step="0.01"
-            min="0"
             value={entry.amount}
             onChange={(ev) => onUpdate({ amount: Number(ev.target.value) || 0 })}
             className="h-7 w-28 text-right text-xs tabular"
           />
           <span className={`tabular text-[10px] ${entry.direction === "ricavo" ? "text-positive" : "text-muted-foreground"}`}>
-            {entry.direction === "ricavo" ? "+" : "−"}{formatEur(entry.amount)}
+            {formatSignedEur(entry.direction === "ricavo" ? entry.amount : -entry.amount)}
           </span>
         </div>
       </Td>

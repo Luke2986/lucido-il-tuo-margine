@@ -27,7 +27,7 @@ interface ParsedRow {
   amount: number; // netto positivo (IVA esclusa)
   direction: EntryDirection | null; // null = da decidere; per TD04 è già invertita
   detectedFromVat: boolean;
-  isCreditNote: boolean; // TD04: nota di credito (direzione invertita)
+  isCreditNote: boolean; // TD04: nota di credito, importata con importo negativo
   clientId?: string;
   include: boolean;
 }
@@ -143,9 +143,9 @@ export function FattureXmlImportPanel() {
         date: r.date,
         description: r.description || `Fattura n. ${r.invoiceNumber}`,
         counterparty: r.counterparty,
-        amount: Math.abs(r.amount),
-        // TD04 (nota di credito): la direzione è già invertita in fase di parsing,
-        // l'importo resta positivo (es. nota di credito su un costo → conta come ricavo).
+        // TD04 (nota di credito): stessa direzione della fattura che rettifica, importo negativo,
+        // così riduce il ricavo o il costo originario (anche un costo fisso resta fuori dal margine).
+        amount: r.isCreditNote ? -Math.abs(r.amount) : Math.abs(r.amount),
         direction,
         costType: undefined,
         clientId: r.clientId,
@@ -289,7 +289,7 @@ export function FattureXmlImportPanel() {
                               <div className="text-[10px] text-warning">manuale</div>
                             )}
                             {r.isCreditNote && (
-                              <div className="text-[10px] text-warning">nota credito (segno invertito)</div>
+                              <div className="text-[10px] text-warning">nota credito (importo negativo)</div>
                             )}
                           </Td>
                           <Td>
@@ -499,11 +499,6 @@ function parseFatturaPA(doc: Document, fileName: string, companyVat: string): Pa
     }
     imponibile = Math.abs(imponibile);
 
-    // Nota di credito (TD04): non si nega l'importo, si INVERTE la direzione economica.
-    // Es. nota di credito su una fattura passiva (costo) → riduce i costi → conta come ricavo.
-    const effectiveDirection: EntryDirection | null =
-      isCreditNote && direction ? (direction === "costo" ? "ricavo" : "costo") : direction;
-
     const firstDesc = textOf(body, "Descrizione");
     const description = `${isCreditNote ? "Nota di credito" : "Fattura"} n. ${invoiceNumber}${firstDesc ? ` — ${firstDesc}` : ""}`;
 
@@ -517,7 +512,7 @@ function parseFatturaPA(doc: Document, fileName: string, companyVat: string): Pa
       counterpartyVat,
       description,
       amount: imponibile,
-      direction: effectiveDirection,
+      direction,
       detectedFromVat,
       isCreditNote,
       include: true,
