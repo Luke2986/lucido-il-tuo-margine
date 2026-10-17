@@ -1,38 +1,14 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { useLucidoStore } from "@/lib/store";
 
-export const Route = createFileRoute("/_authenticated")({
+export const Route = createFileRoute("/_app")({
+  // I dati vivono nel browser: niente rendering lato server per queste pagine.
   ssr: false,
-  beforeLoad: async () => {
-    // Sessione automatica anonima: nessun login richiesto in questa versione.
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) console.error("[auth] signInAnonymously fallito", error);
-    }
-    return {};
-  },
-  component: AuthenticatedLayout,
+  component: AppLayout,
 });
 
-function AuthenticatedLayout() {
-  useEffect(() => {
-    const s = useLucidoStore.getState();
-    if (!s.loaded && !s.loading) void s.loadAll();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        useLucidoStore.getState().reset();
-      } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        void useLucidoStore.getState().loadAll();
-      }
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
+function AppLayout() {
 
   return (
     <SidebarProvider defaultOpen={true}>

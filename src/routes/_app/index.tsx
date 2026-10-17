@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarginDashboard } from "@/components/MarginDashboard";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_app/")({
   head: () => ({
     meta: [
       { title: "Lucido — Quali clienti ti fanno guadagnare" },

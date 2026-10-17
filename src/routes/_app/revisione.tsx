@@ -11,12 +11,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { classifyCosts } from "@/lib/classify.functions";
 import { useLucidoStore } from "@/lib/store";
 import type { CostType } from "@/lib/types";
 import { formatEur } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/revisione")({
+export const Route = createFileRoute("/_app/revisione")({
   head: () => ({ meta: [{ title: "Revisione AI — Lucido" }] }),
   component: RevisioneAI,
 });
@@ -31,12 +31,12 @@ const COST_TYPE_LABEL: Record<CostType, string> = {
 };
 
 function RevisioneAI() {
-  const companyId = useLucidoStore((s) => s.companyId);
+  const company = useLucidoStore((s) => s.company);
   const role = useLucidoStore((s) => s.role);
   const entries = useLucidoStore((s) => s.entries);
   const clients = useLucidoStore((s) => s.clients);
   const updateEntry = useLucidoStore((s) => s.updateEntry);
-  const loadAll = useLucidoStore((s) => s.loadAll);
+  const applyClassifications = useLucidoStore((s) => s.applyClassifications);
 
   const [running, setRunning] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -54,23 +54,30 @@ function RevisioneAI() {
   );
 
   const runClassify = async () => {
-    if (!companyId) {
-      toast.error("Nessuna azienda attiva.");
+    // Solo le voci non ancora classificate o proposte dall'AI: quelle impostate a mano restano come sono.
+    const toClassify = queue.filter((e) => !e.costType || e.validatedBy === "AI").slice(0, 200);
+    if (toClassify.length === 0) {
+      toast.info("Nessun costo da classificare.");
       return;
     }
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("classify", {
-        body: { companyId },
+      const { items, skipped } = await classifyCosts({
+        data: {
+          company: { name: company.name, sector: company.sector },
+          clients: clients.map((c) => ({ id: c.id, name: c.name, kind: c.kind })),
+          costs: toClassify.map((e) => ({
+            id: e.id,
+            date: e.date,
+            description: e.description,
+            counterparty: e.counterparty,
+            amount: e.amount,
+            invoiceNumber: e.invoiceNumber,
+          })),
+        },
       });
-      if (error) throw error;
-      const d = (data ?? {}) as { classified?: number; skipped?: number; errors?: unknown[] };
-      await loadAll();
-      toast.success(
-        `Classificate ${d.classified ?? 0} voci con l'AI` +
-          (d.skipped ? `, ${d.skipped} saltate` : "") + ".",
-      );
-      if (d.errors && d.errors.length > 0) console.warn("[classify] errori:", d.errors);
+      const applied = applyClassifications(items);
+      toast.success(`Classificate ${applied} voci con l'AI` + (skipped ? `, ${skipped} saltate` : "") + ".");
     } catch (e) {
       toast.error(`Classificazione fallita: ${(e as Error)?.message ?? "errore"}`);
     } finally {
@@ -128,7 +135,7 @@ function RevisioneAI() {
             prima di pubblicare. Nessun numero va al titolare senza la tua validazione.
           </p>
         </div>
-        <Button onClick={runClassify} disabled={running || !companyId} className="shrink-0" size="sm">
+        <Button onClick={runClassify} disabled={running || queue.length === 0} className="shrink-0" size="sm">
           <Sparkles className="mr-1 h-4 w-4" />
           <span className="hidden sm:inline">{running ? "Classifico…" : "Classifica con AI"}</span>
           <span className="sm:hidden">{running ? "…" : "AI"}</span>

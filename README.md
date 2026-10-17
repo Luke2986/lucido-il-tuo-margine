@@ -14,15 +14,15 @@ Lucido prende i dati che l'azienda produce già (fatture elettroniche FatturaPA,
 
 - [Cosa fa](#cosa-fa)
 - [Come si calcola il primo margine](#come-si-calcola-il-primo-margine)
-- [Prova la demo](#prova-la-demo)
+- [Dati di esempio](#dati-di-esempio)
+- [Usare i tuoi dati](#usare-i-tuoi-dati)
+- [Dove finiscono i dati](#dove-finiscono-i-dati)
 - [Stack tecnico](#stack-tecnico)
 - [Struttura del progetto](#struttura-del-progetto)
-- [Modello dati](#modello-dati)
 - [Avvio in locale](#avvio-in-locale)
-- [Configurare Supabase](#configurare-supabase)
 - [Classificazione AI](#classificazione-ai)
 - [Deploy](#deploy)
-- [Variabili d'ambiente](#variabili-dambiente)
+- [Aggiungere un database](#aggiungere-un-database)
 - [Limiti noti](#limiti-noti)
 - [Licenza](#licenza)
 
@@ -35,7 +35,7 @@ Lucido prende i dati che l'azienda produce già (fatture elettroniche FatturaPA,
 | **Margine clienti** (`/`) | Titolare | Primo margine per cliente/commessa, ordinato dal peggiore. I clienti in perdita sono in cima e ogni riga si apre per vedere ricavi e costi che lo compongono. |
 | **Area dati** (`/area-dati`) | Operatore | Anagrafica clienti e commesse, editor delle voci, import da Excel/CSV e da fatture elettroniche FatturaPA (XML). |
 | **Revisione AI** (`/revisione`) | Operatore | Coda dei costi da validare, con quelli a confidenza più bassa e importo più alto in cima. Un pulsante lancia la classificazione AI, poi l'operatore conferma o corregge. |
-| **Impostazioni** (`/impostazioni`) | Operatore | Dati dell'azienda, soglie di confidenza dell'AI, pubblicazione verso il titolare, cambio di ruolo per provare le due viste, ripristino dei dati di esempio. |
+| **Impostazioni** (`/impostazioni`) | Operatore | Dati dell'azienda, soglie di confidenza dell'AI, pubblicazione verso il titolare, cambio di ruolo per provare le due viste, ripristino o cancellazione dei dati. |
 
 ### Funzioni principali
 
@@ -43,7 +43,7 @@ Lucido prende i dati che l'azienda produce già (fatture elettroniche FatturaPA,
 - **Import Excel/CSV.** Mappatura delle colonne con riconoscimento delle intestazioni italiane più comuni. Legge importi e date in formato italiano (`1.234,56`, `15/01/2026`).
 - **Classificazione AI dei costi.** Ogni costo viene classificato come `fisso`, `variabile` o `non_costo` e, se possibile, attribuito a un cliente. Ogni proposta ha una confidenza e una breve motivazione ("perché questo numero").
 - **Cancello morbido.** I numeri restano "da validare" finché l'operatore non li conferma. La dashboard mostra quanta parte dei ricavi è stata validata.
-- **Due ruoli.** L'**operatore** inserisce, importa, valida e pubblica. Il **titolare** vede solo l'azienda pubblicata, in sola lettura.
+- **Due ruoli.** L'**operatore** inserisce, importa, valida e pubblica. Il **titolare** vede la dashboard solo quando l'azienda è pubblicata.
 
 ## Come si calcola il primo margine
 
@@ -56,13 +56,47 @@ primo margine (cliente) = ricavi attribuiti al cliente − costi VARIABILI attri
 - **Non costo**: IVA, imposte, giroconti, rimborsi di finanziamenti. È **escluso**.
 - Le **note di credito** hanno la stessa direzione della fattura che rettificano, con importo negativo: riducono il ricavo o il costo originale.
 
-Il calcolo avviene sia nel browser (`computeMarginRows` in `src/lib/store.ts`) sia nel database (vista `margin_by_client`). Le due versioni vanno tenute allineate.
+Il calcolo è in `computeMarginRows` (`src/lib/store.ts`).
 
-## Prova la demo
+---
 
-Non serve registrarsi: all'apertura dell'app viene creata una sessione anonima e **ogni visitatore riceve la propria azienda di esempio** ("Studio Marini S.r.l.", sette clienti, voci da gennaio a maggio 2026). Puoi modificare, importare, cancellare e ripristinare i dati: nessun altro li vede e tu non vedi quelli degli altri.
+## Dati di esempio
 
-Per provare la vista del titolare: *Impostazioni → Ruolo di test → Titolare* (la vista titolare mostra i dati solo se l’azienda è pubblicata).
+Al primo accesso l'app si apre già piena: **Studio Marini S.r.l.**, una piccola agenzia digitale fittizia, con circa 130 movimenti da gennaio a settembre 2026. Nomi, P.IVA e importi sono inventati, ma l'andamento è quello di un'attività vera:
+
+| Cliente / commessa | Cosa racconta |
+| --- | --- |
+| Acme S.r.l. | Canone mensile, pochi costi variabili: il cliente che regge l'azienda. |
+| Comune di Prato — Portale servizi | Commessa pubblica a SAL, margine sano. |
+| TechNova S.r.l. | Consulenze ad alto margine. |
+| Velasca Retail, Faro Logistica | Buoni clienti, ma con costi ancora da validare. |
+| Studio Rossi & Partners | Fatturato alto, ma i freelance costano più di quanto incassi: **in perdita**. |
+| Bianchi Eventi | Eventi con trasferte e service: **in perdita**. |
+| Ortofrutta Bassi — E-commerce | Piccola commessa a prezzo fisso, sottostimata: **in perdita**. |
+
+Ci sono anche i costi fissi di struttura (affitto, stipendi, F24, software, utenze, commercialista, assicurazione), le rate del finanziamento e i versamenti IVA (non costi), e qualche addebito bancario ancora senza classificazione, che fa da coda per la **Revisione AI**.
+
+Per provare la vista del titolare: *Impostazioni → Ruolo di test → Titolare*.
+
+## Usare i tuoi dati
+
+1. Vai in **Impostazioni → Gestione dati** e premi **Cancella tutti i dati**: azienda, clienti e voci vengono svuotati.
+2. In **Impostazioni** inserisci nome, P.IVA (serve all'import FatturaPA per capire se una fattura è attiva o passiva), settore e periodo.
+3. In **Area dati** crea clienti e commesse, poi inserisci le voci a mano oppure importa fatture XML ed estratti conto Excel/CSV.
+4. In **Revisione AI** classifica i costi (con l'AI o a mano) e validali.
+5. Torna in **Impostazioni** e pubblica: il titolare vede il margine.
+
+Per tornare all'azienda di esempio: **Impostazioni → Gestione dati → Ripristina dati di esempio**.
+
+## Dove finiscono i dati
+
+Lucido **non ha un database**. Tutto quello che inserisci resta nel `localStorage` del tuo browser (chiave `lucido-dati`):
+
+- nessun account, nessun server che conserva i tuoi numeri;
+- ogni visitatore della demo pubblica ha la sua copia, che nessun altro vede;
+- se cancelli i dati del sito, usi la navigazione privata o cambi browser/dispositivo, riparti dai dati di esempio.
+
+L'unica cosa che lascia il browser è la **classificazione AI**, e solo quando premi il pulsante: descrizione, controparte, data e importo dei costi da classificare, più nome e settore dell'azienda e l'elenco dei clienti, vengono mandati al server dell'app e da lì al provider AI. Nulla viene salvato lato server.
 
 ---
 
@@ -70,11 +104,10 @@ Per provare la vista del titolare: *Impostazioni → Ruolo di test → Titolare*
 
 | Area | Tecnologia |
 | --- | --- |
-| Framework | [TanStack Start](https://tanstack.com/start) (React 19, routing a file, SSR) |
+| Framework | [TanStack Start](https://tanstack.com/start) (React 19, routing a file, server functions) |
 | Build | Vite 8 + [Nitro](https://nitro.build) (output per Vercel o server Node) |
 | UI | Tailwind CSS 4, shadcn/ui, Radix, lucide-react, recharts |
-| Stato | Zustand (un unico store) |
-| Backend | [Supabase](https://supabase.com): Postgres con Row Level Security, Auth anonima, Edge Functions (Deno) |
+| Stato e persistenza | Zustand con middleware `persist` su `localStorage` |
 | AI | Qualsiasi LLM con API compatibile OpenAI (default: Google Gemini `gemini-2.5-flash`) |
 | Import | `xlsx` (SheetJS) per Excel/CSV, `DOMParser` per FatturaPA |
 | Package manager | [Bun](https://bun.sh) |
@@ -85,48 +118,29 @@ Per provare la vista del titolare: *Impostazioni → Ruolo di test → Titolare*
 src/
   routes/                      pagine (routing a file di TanStack Router)
     __root.tsx                 shell HTML, meta, error boundary
-    _authenticated/            area dell'app (sessione anonima automatica)
+    _app/                      area dell'app (solo client, nessun login)
       index.tsx                Margine clienti (dashboard titolare)
       area-dati.tsx            clienti, voci, import
       revisione.tsx            coda di revisione AI
-      impostazioni.tsx         azienda, soglie, ruolo, pubblicazione
+      impostazioni.tsx         azienda, soglie, ruolo, pubblicazione, reset dati
   components/
     MarginDashboard.tsx        dashboard del primo margine
     data-area/                 editor voci, import Excel/CSV e FatturaPA
     ui/                        componenti shadcn/ui
   lib/
-    store.ts                   store Zustand + lettura/scrittura su Supabase + calcolo margine
+    store.ts                   store Zustand, persistenza locale, calcolo del margine
     seed.ts                    dati di esempio (Studio Marini)
+    classify.functions.ts      server function di classificazione AI
+    types.ts                   tipi del dominio (Client, Entry, ...)
     format.ts                  formattazione it-IT di valuta, percentuali, date
-  integrations/supabase/       client Supabase e tipi generati
-  server.ts, start.ts          entry SSR e middleware
-supabase/
-  migrations/                  schema, RLS, trigger (in ordine di timestamp)
-  functions/classify/          edge function di classificazione AI
-docs/                          PRD e documenti di prodotto
+  server.ts, start.ts          entry server e middleware
+docs/                          PRD e documenti di prodotto (descrivono anche la versione con database)
 project-context.md             regole e convenzioni per chi (o cosa) scrive codice qui
 ```
 
-## Modello dati
-
-| Tabella | Contenuto |
-| --- | --- |
-| `companies` | Anagrafica dell'azienda, stato `bozza`/`pubblicata`, `seeded_at` (dati di esempio già caricati) |
-| `memberships` | Utente ↔ azienda con ruolo `operator` / `owner` |
-| `profiles` | Nome visualizzato dell'utente |
-| `clients` | Clienti e commesse dell'azienda |
-| `transactions` | Movimenti grezzi: data, descrizione, controparte, importo, direzione (`ricavo`/`costo`), fonte |
-| `classifications` | Una per transazione: tipo di costo, cliente attribuito, confidenza, motivazione, stato di validazione |
-| `settings` | Soglie di confidenza (alta/media) per azienda |
-| `margin_by_client` (vista) | Primo margine per cliente calcolato lato database |
-
-**Sicurezza.** Tutte le tabelle hanno la Row Level Security attiva: un utente vede solo le aziende di cui è membro e il titolare vede i dati solo se l'azienda è pubblicata. Alla registrazione (anche anonima) il trigger `handle_new_user` crea una nuova azienda e rende l'utente suo operatore. Il ruolo si cambia solo con la funzione `set_my_role`, che non permette di passare ad aziende altrui.
-
----
-
 ## Avvio in locale
 
-Requisiti: [Bun](https://bun.sh) ≥ 1.3 (oppure Node ≥ 22 con npm) e un progetto Supabase configurato come spiegato [qui sotto](#configurare-supabase).
+Requisiti: [Bun](https://bun.sh) ≥ 1.3 (oppure Node ≥ 22 con npm).
 
 ```bash
 git clone https://github.com/Luke2986/lucido-il-tuo-margine.git
@@ -136,17 +150,15 @@ git clone https://github.com/Luke2986/lucido-il-tuo-margine.git
 cd lucido-il-tuo-margine && bun install
 ```
 
-Copia `.env.example` in `.env` e inserisci l'URL e la chiave **pubblica** (anon/publishable) del tuo progetto Supabase. Vedi [Variabili d'ambiente](#variabili-dambiente).
-
-```bash
-cp .env.example .env
-```
-
 ```bash
 bun run dev
 ```
 
-L'app è su <http://localhost:8080>.
+L'app è su <http://localhost:8080> e funziona subito, senza configurare nulla. Solo la classificazione AI richiede una chiave: copia `.env.example` in `.env` e inserisci `AI_API_KEY`.
+
+```bash
+cp .env.example .env
+```
 
 | Script | Cosa fa |
 | --- | --- |
@@ -156,49 +168,27 @@ L'app è su <http://localhost:8080>.
 | `bun run lint` | ESLint |
 | `bun run format` | Prettier |
 
-## Configurare Supabase
-
-Ti servono un progetto Supabase (va bene il piano gratuito) e la [Supabase CLI](https://supabase.com/docs/guides/cli).
-
-1. **Collega il progetto** (il *project ref* è nell'URL della dashboard):
-   ```bash
-   supabase link --project-ref IL_TUO_PROJECT_REF
-   ```
-2. **Applica lo schema** (tutte le migrazioni in `supabase/migrations/`):
-   ```bash
-   supabase db push
-   ```
-3. **Attiva l'accesso anonimo**: dashboard Supabase → *Authentication* → *Sign In / Providers* → **Allow anonymous sign-ins**. Se pubblichi l'app, valuta di attivare anche il CAPTCHA per limitare gli abusi.
-4. **Pubblica l'edge function** e imposta la chiave AI (vedi la sezione successiva):
-   ```bash
-   supabase functions deploy classify
-   ```
-   ```bash
-   supabase secrets set AI_API_KEY=LA_TUA_CHIAVE
-   ```
-
-Le chiavi `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` dentro l'edge function le fornisce Supabase in automatico.
-
 ## Classificazione AI
 
-L'edge function `supabase/functions/classify` riceve l'id dell'azienda, verifica che l'utente ne sia operatore, manda all'LLM i costi non ancora validati (in blocchi da 40) e salva le proposte come `ai_proposta`. Le risposte del modello vengono controllate: tipo di costo ammesso, cliente esistente, confidenza tra 0 e 1. Le voci validate dall'operatore mentre l'AI lavora non vengono sovrascritte.
+La server function `classifyCosts` (`src/lib/classify.functions.ts`) riceve dal browser i costi da classificare (al massimo 200 per volta), li manda all'LLM in blocchi da 40 e restituisce le proposte. Le risposte del modello vengono controllate: tipo di costo ammesso, cliente esistente, confidenza tra 0 e 1. Il browser applica le proposte solo ai costi ancora da validare: quello che l'operatore ha già confermato non viene toccato.
 
-| Secret | Obbligatorio | Default |
+La chiave resta sul server e non arriva mai al browser. Per limitare gli abusi della demo pubblica c'è un tetto di 10 richieste l'ora per indirizzo IP.
+
+| Variabile | Obbligatoria | Valore |
 | --- | --- | --- |
-| `AI_API_KEY` | sì | chiave [Google AI Studio](https://aistudio.google.com/apikey) (Gemini ha un piano gratuito) |
-| `AI_API_URL` | no | `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` |
-| `AI_MODEL` | no | `gemini-2.5-flash` |
+| `AI_API_KEY` | sì, solo per l'AI | chiave [Google AI Studio](https://aistudio.google.com/apikey) (Gemini ha un piano gratuito) |
+| `AI_API_URL` | no | default `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` |
+| `AI_MODEL` | no | default `gemini-2.5-flash` |
 
-Funziona con qualunque provider che esponga l'endpoint `chat/completions` in formato OpenAI: basta cambiare `AI_API_URL` e `AI_MODEL`.
+Funziona con qualunque provider che esponga l'endpoint `chat/completions` in formato OpenAI: basta cambiare `AI_API_URL` e `AI_MODEL`. Senza `AI_API_KEY` l'app funziona lo stesso: la Revisione AI mostra un messaggio e i costi si classificano a mano.
 
 ## Deploy
 
 ### Vercel
 
-1. Importa il repository su [Vercel](https://vercel.com/new).
-2. Lascia i comandi suggeriti oppure imposta *Build Command* `bun run build`: con la variabile `VERCEL` (che Vercel definisce da solo) Nitro genera l'output nel formato di Vercel, in `.vercel/output`.
-3. Aggiungi le [variabili d'ambiente](#variabili-dambiente) per *Production* e *Preview*.
-4. Deploy. Se usi un dominio tuo, aggiungilo anche in Supabase → *Authentication* → *URL Configuration*.
+1. Importa il repository su [Vercel](https://vercel.com/new) (framework *Other*).
+2. *Install Command* `bun install`, *Build Command* `bun run build`. Con la variabile `VERCEL` (che Vercel definisce da solo) Nitro genera l'output nel formato di Vercel, in `.vercel/output`.
+3. Facoltativo: in *Settings → Environment Variables* aggiungi `AI_API_KEY` (e se vuoi `AI_API_URL`, `AI_MODEL`) per *Production* e *Preview*, poi rifai il deploy.
 
 ### Server Node (qualsiasi hosting)
 
@@ -210,19 +200,15 @@ bun install && bun run build
 PORT=3000 bun run start
 ```
 
-In sviluppo basta `bun run dev` (porta 8080).
+## Aggiungere un database
 
-## Variabili d'ambiente
+Il prototipo è volutamente senza backend: chi vuole usarlo con più utenti o su più dispositivi può aggiungere il database che preferisce (Supabase, Postgres, SQLite, Firebase, ...). Il punto da toccare è uno solo, `src/lib/store.ts`:
 
-| Variabile | Dove serve | Valore |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | browser | URL del progetto Supabase |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | browser | chiave pubblica (anon / publishable) |
-| `SUPABASE_URL` | server (SSR) | come sopra |
-| `SUPABASE_PUBLISHABLE_KEY` | server (SSR) | come sopra |
-| `SUPABASE_SERVICE_ROLE_KEY` | solo server, opzionale | serve solo a eventuali funzioni server con privilegi da amministratore. **Mai** nel browser né in un file committato |
+- i componenti leggono lo stato e chiamano solo le azioni dello store (`addEntry`, `updateEntry`, `removeClient`, `applyClassifications`, ...);
+- oggi ogni azione modifica lo stato in memoria e il middleware `persist` lo salva nel `localStorage`;
+- per usare un database, sostituisci `persist` con un caricamento iniziale dal backend e fai in modo che ogni azione scriva anche lì (meglio tramite server function in `src/lib/*.functions.ts`, così le credenziali restano sul server).
 
-Le variabili `VITE_*` finiscono nel bundle del browser al momento della build: mettici solo chiavi pubbliche. La sicurezza dei dati dipende dalla Row Level Security, non dal tenere segreta la chiave anon.
+Il modello dati da salvare è in `src/lib/types.ts` (`Client`, `Entry`) e in `store.ts` (`Company`, `ConfidenceThresholds`). Ricordati di proteggere i dati per azienda (es. Row Level Security su Postgres) e di aggiungere un login vero.
 
 ---
 
@@ -230,8 +216,9 @@ Le variabili `VITE_*` finiscono nel bundle del browser al momento della build: m
 
 È un prototipo: questi limiti sono noti e accettati.
 
-- **Nessun account vero**: la sessione è anonima e vive nel browser. Se cancelli i dati del sito o cambi dispositivo ricevi una nuova azienda vuota di esempio. La pagina `/auth` (email e password) esiste ma non fa parte del flusso.
-- **Salvataggi non transazionali**: una voce viene salvata in due scritture (transazione e classificazione). Se la seconda fallisce, nel database può restare una transazione senza classificazione.
+- **Dati solo nel browser**: niente sincronizzazione tra dispositivi né condivisione tra operatore e titolare reali. I due ruoli si provano sullo stesso browser.
+- **Spazio limitato**: il `localStorage` tiene qualche MB, abbastanza per migliaia di voci ma non per anni di movimenti.
+- **Ruoli non protetti**: il cambio di ruolo è un interruttore di prova, non un controllo di accesso.
 - **Import**: i file FatturaPA firmati (`.p7m`) non sono supportati; carica l'XML in chiaro. `xlsx` 0.18.5 da npm ha vulnerabilità note su file malevoli: importa solo file di cui ti fidi.
 - **Nessun test automatico**: le verifiche sono `bun run lint`, `bun run build` e prova manuale.
 - **Solo primo margine**: cassa prospettica, EBITDA, break-even e alert sulla crisi d'impresa sono descritti in `docs/prd.md` ma non sono implementati.

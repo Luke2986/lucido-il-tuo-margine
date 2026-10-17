@@ -1,5 +1,5 @@
 // Import FatturaPA XML (multi-file). Parsing namespace-agnostic con DOMParser,
-// anteprima editabile, scrittura su Supabase via store.addEntries.
+// anteprima editabile, salvataggio nello store locale via addEntries.
 
 import { useMemo, useRef, useState } from "react";
 import { Upload, Check, X, AlertTriangle, FileWarning, Trash2 } from "lucide-react";

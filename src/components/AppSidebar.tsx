@@ -36,6 +36,7 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const role = useLucidoStore((s) => s.role);
   const company = useLucidoStore((s) => s.company);
+  const switchRole = useLucidoStore((s) => s.switchRole);
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
   };
@@ -118,6 +119,15 @@ export function AppSidebar() {
             <p className="truncate text-xs text-muted-foreground">
               {company.name || "Nessuna azienda"}
             </p>
+            {role === "owner" && (
+              <button
+                type="button"
+                onClick={() => switchRole("operator")}
+                className="mt-2 text-xs font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Torna operatore
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2 py-2">

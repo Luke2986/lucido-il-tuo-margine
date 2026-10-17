@@ -1,7 +1,7 @@
 ---
 project_name: 'Lucido — il tuo margine'
 user_name: 'Master Luca'
-date: '2026-06-22'
+date: '2026-10-17'
 sections_completed:
   ['technology_stack', 'language_rules', 'framework_rules', 'data_model_rules', 'testing_rules', 'quality_rules', 'workflow_rules', 'anti_patterns']
 status: 'complete'
@@ -12,21 +12,21 @@ repo_path: 'lucido-il-tuo-margine'
 
 # Project Context for AI Agents — Lucido
 
-_Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codice in questo progetto. Focus su dettagli non ovvi. Prototipo v0 brownfield, indipendente (Vercel o server Node + Supabase). Licenza PolyForm Noncommercial 1.0.0. Codice e commenti in italiano; commit/PR in inglese o italiano ma in stato funzionante._
+_Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codice in questo progetto. Prototipo v0, indipendente e **senza database**: i dati vivono nel `localStorage` del browser e partono da un dataset di esempio. Deploy su Vercel o server Node. Licenza PolyForm Noncommercial 1.0.0. Codice e commenti in italiano; commit/PR in inglese o italiano ma in stato funzionante._
 
 ---
 
 ## Technology Stack & Versions
 
-- **Runtime/package manager:** Bun (`bun.lock`, `bunfig.toml`). Script: `bun run dev | build | lint | format`.
-- **Framework:** TanStack Start `^1.167` + TanStack Router `^1.168` (routing file-based, SSR via Nitro: preset `vercel` o `node-server`).
+- **Runtime/package manager:** Bun (`bun.lock`, `bunfig.toml`). Script: `bun run dev | build | start | lint | format`.
+- **Framework:** TanStack Start `^1.167` + TanStack Router `^1.168` (routing file-based, server functions, Nitro: preset `vercel` o `node-server`).
 - **UI:** React `^19.2` + shadcn/ui (style `new-york`, baseColor `slate`) + Radix primitives. Icone `lucide-react`.
 - **Styling:** Tailwind CSS **v4** (`@tailwindcss/vite`), CSS variables, entry `src/styles.css`, `tw-animate-css`.
-- **Build:** Vite `^8` con plugin espliciti in `vite.config.ts`; Nitro (beta) in build: preset `vercel` se `VERCEL` è definita, altrimenti `node-server` (`bun run start`).
-- **State:** Zustand `^5` (store unico `src/lib/store.ts`). Data fetching: TanStack Query `^5`.
-- **Backend:** Supabase (`@supabase/supabase-js ^2.108`); edge functions Deno. Setup completo nel `README.md`.
+- **Build:** Vite `^8` con plugin espliciti in `vite.config.ts`; Nitro solo in build: preset `vercel` se `VERCEL` è definita, altrimenti `node-server`.
+- **State:** Zustand `^5` con middleware `persist` (store unico `src/lib/store.ts`, chiave `lucido-dati`).
+- **AI:** server function `classifyCosts` (`src/lib/classify.functions.ts`), LLM via API compatibile OpenAI (default Gemini `gemini-2.5-flash`).
 - **Validazione:** Zod `^3`. Form: react-hook-form + `@hookform/resolvers`.
-- **Altro:** recharts (grafici), date-fns, xlsx (import Excel/fatture), sonner (toast).
+- **Altro:** recharts, date-fns, xlsx (import Excel), sonner (toast).
 - **Lingua:** TypeScript `^5.8` strict.
 
 ## Critical Implementation Rules
@@ -34,88 +34,74 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 ### Language-Specific Rules (TypeScript)
 
 - `strict: true`. MA `noUnusedLocals`/`noUnusedParameters` = **false** e ESLint `@typescript-eslint/no-unused-vars` = **off** → variabili inutilizzate non rompono la build (non rimuoverle a tappeto come "fix lint").
-- `noFallthroughCasesInSwitch: true`, `noUncheckedSideEffectImports: true`. `moduleResolution: Bundler`, `allowImportingTsExtensions: true`.
 - Alias path **`@/*` → `src/*`** (sia tsconfig sia Vite). Usa sempre `@/...`, mai percorsi relativi lunghi.
-- **`no-restricted-imports`: il pacchetto `server-only` è VIETATO.** Per codice solo-server: rinomina il modulo in `*.server.ts` oppure usa `@tanstack/react-start/server-only`.
-- Formattazione it-IT centralizzata in `src/lib/format.ts` (`formatEur`, `formatPercent`, `formatDate`). Non istanziare `Intl.NumberFormat` ad-hoc nei componenti.
+- **`no-restricted-imports`: il pacchetto `server-only` è VIETATO.** Per codice solo-server: rinomina il modulo in `*.server.ts` oppure usa import dinamici dentro l'handler della server function.
+- Formattazione it-IT centralizzata in `src/lib/format.ts` (`formatEur`, `formatSignedEur`, `formatPercent`, `formatDate`). Non istanziare `Intl.NumberFormat` ad-hoc nei componenti.
 
 ### Framework-Specific Rules (TanStack Start / Router)
 
-- **Routing file-based** in `src/routes/`. Convenzioni: `index.tsx`→`/`, `$id` dinamico (bare `$`), `_authenticated/` gruppo protetto, `__root.tsx` shell unica. **NIENTE** `src/pages/`, `app/layout.tsx` o convenzioni Next/Remix (vedi `src/routes/README.md`).
+- **Routing file-based** in `src/routes/`. Convenzioni: `index.tsx`→`/`, `_app/` layout dell'app, `__root.tsx` shell unica. **NIENTE** `src/pages/`, `app/layout.tsx` o convenzioni Next/Remix.
 - **`src/routeTree.gen.ts` è auto-generato — NON modificarlo a mano.**
-- `__root.tsx`: preserva `<Outlet />`, `RootShell` (`<html lang="it">`), QueryClientProvider e `<Toaster />`. Meta/SEO già definiti lì.
-- `_authenticated/route.tsx`: `ssr: false`; `beforeLoad` fa **`supabase.auth.signInAnonymously()`** (questa versione non richiede login). Reagisce a `supabase.auth.onAuthStateChange` (SIGNED_OUT→`reset()`, SIGNED_IN/USER_UPDATED→`loadAll()`). Esiste anche `auth.tsx` (email/password) non usato dal flusso anonimo.
-- **Server function middleware:** `attachSupabaseAuth` (client) DEVE restare registrato in `src/start.ts` `functionMiddleware`, altrimenti il browser non allega il bearer token alle serverFn RPC. `requireSupabaseAuth` (server) valida il JWT e popola `context.{supabase,userId,claims}`.
+- `__root.tsx`: preserva `<Outlet />`, `RootShell` (`<html lang="it">`), QueryClientProvider e `<Toaster />`.
+- `_app/route.tsx`: **`ssr: false`**. Lo stato viene dal `localStorage`, quindi le pagine dell'app si renderizzano solo nel browser (niente mismatch di idratazione).
+- **Server functions:** `createServerFn({ method: "POST" }).inputValidator(zodSchema).handler(...)` in file `src/lib/*.functions.ts`. Moduli solo-server (`@tanstack/react-start/server`, segreti, SDK) vanno importati **dinamicamente dentro l'handler**, mai a top-level.
 - **`vite.config.ts`:** plugin dichiarati a mano (tailwindcss, tsConfigPaths, tanstackStart, nitro solo in build, viteReact). Non duplicarli. Dev server su `::`:8080.
-- shadcn/ui: componenti in `src/components/ui` (NON riscrivere da zero), alias da `components.json`. Aggiungi nuovi componenti con la CLI shadcn.
-- **State (Zustand):** store unico `useLucidoStore`. Nei componenti usa `useHydratedStore`/`useIsHydrated` (`src/lib/use-store.ts`) per garantire che `loadAll()` sia stato eseguito prima di leggere. Tutte le mutazioni sono **ottimistiche con rollback** sull'errore + `reportError()`/`toast.error` — replica questo pattern per nuove azioni.
+- shadcn/ui: componenti in `src/components/ui` (NON riscrivere da zero). Aggiungi nuovi componenti con la CLI shadcn.
 
-### Data Model & Supabase Rules
+### Data & Persistence Rules
 
-- **Tre client Supabase distinti** (`types.ts` si rigenera con `supabase gen types typescript`):
-  - `client.ts` → browser, **anon/publishable key**, Proxy lazy. Import: `import { supabase } from "@/integrations/supabase/client"`.
-  - `client.server.ts` → **service role, bypassa RLS**. Solo operazioni server fidate. **Mai** import top-level in file di route o `*.functions.ts` (finiscono nel bundle browser): usa `const { supabaseAdmin } = await import("@/integrations/supabase/client.server")` dentro l'handler.
-  - `auth-middleware.ts` (`requireSupabaseAuth`) → query per-utente con RLS dal JWT. `auth-attacher.ts` (`attachSupabaseAuth`) → allega il token.
-- **Modello UI `Entry` ≠ schema DB.** Un `Entry` è la fusione di `transactions` (dati grezzi) + `classifications` (classificazione costo, 1:1). Conversioni SOLO via gli helper in `store.ts`: `composeEntry`, `entryToTxInsert`, `entryToTxUpdate`, `entryToClsInsert`.
-  - `classifications` esiste per **ogni** voce, costi e ricavi (`onConflict: transaction_id`): per i ricavi `cost_type` è `null` e serve a salvare lo stato di validazione. Voci senza classification (righe vecchie): costo → da validare, ricavo → validato.
-  - `amount` è positivo e il segno è dato da `direction`, **tranne le note di credito (TD04)**: stessa direzione della fattura rettificata, importo negativo.
-- **Company corrente** = prima `membership` dell'utente loggato (ordinata per `created_at`). `companyId`/`role` derivano da lì. Trigger `handle_new_user` crea **un'azienda nuova per ogni utente** (anche anonimo) con membership `operator`; al primo `loadAll` lo store la popola con il dataset di esempio (`seedCompany`, segna `companies.seeded_at`). Il cambio ruolo demo passa dalla RPC `set_my_role` (le membership non sono aggiornabili direttamente).
-- **RLS con funzioni `SECURITY DEFINER`** (`is_member`, `has_role_in_company`, `is_company_published`) per evitare ricorsione nelle policy. Regole per nuove funzioni: `LANGUAGE sql STABLE SECURITY DEFINER`, sempre **`SET search_path = public`**, poi `REVOKE EXECUTE ... FROM PUBLIC` e `GRANT EXECUTE ... TO authenticated`.
-- **Migrazioni canoniche:** `supabase/migrations/*` (timestamp).
-- **Vista `margin_by_client`** (`security_invoker = true`): calcola il primo margine lato DB; eredita RLS dalle tabelle. Mantienila allineata a `computeMarginRows` in `store.ts`.
-- **Edge function `supabase/functions/classify`:** `verify_jwt = true`; verifica membership via service client; solo ruolo `operator`; LLM via API compatibile OpenAI: secret `AI_API_KEY` (default Gemini `gemini-2.5-flash`, override con `AI_API_URL`/`AI_MODEL`), batch da 40. Non sovrascrive voci validate durante l'elaborazione. Riclassifica solo costi senza classification o in stato `ai_proposta`. Valida output AI: whitelist `cost_type`, `client_id` solo se tra i clienti validi, `confidence` clampata [0,1]. Gestisce 402 (crediti esauriti) / 429 (rate limit). Invocata via `supabase.functions.invoke("classify", { body: { companyId } })`.
+- **Nessun database.** Lo store Zustand è l'unica fonte di verità; `persist` salva `role`, `company`, `thresholds`, `clients`, `entries` (vedi `partialize`). L'accesso a `localStorage` passa da `safeLocalStorage`, che ingoia le eccezioni (navigazione privata, quota piena): l'app deve funzionare anche senza persistenza.
+- **Azioni sincrone.** Tutte le mutazioni sono funzioni sincrone dello store (`addEntry`, `updateEntry`, `removeClient`, `applyClassifications`, `resetToSeed`, `clearAll`, ...). I componenti non scrivono mai direttamente su `localStorage`.
+- **Cambi di schema:** se cambi la forma dei dati persistiti, incrementa `version` nel `persist` e aggiungi una `migrate`, altrimenti chi ha già dati salvati si ritrova uno stato incoerente.
+- **Dataset di esempio** in `src/lib/seed.ts` (Studio Marini S.r.l., gennaio–settembre 2026). `resetToSeed` lo ricarica, `clearAll` svuota azienda, clienti e voci. Il seed deve restare coerente con la logica del margine (deve mostrare clienti in perdita, voci da validare e costi senza classificazione per la Revisione AI).
+- **`Entry`** (`src/lib/types.ts`): `amount` è positivo e il segno è dato da `direction`, **tranne le note di credito (TD04)**: stessa direzione della fattura rettificata, importo negativo. Per i ricavi `costType` è sempre vuoto (`updateEntry` lo azzera).
+- **Classificazione AI:** il browser manda solo i costi da classificare; il server chiama l'LLM in batch da 40 (max 200), valida ogni elemento con Zod (whitelist `cost_type`, `client_id` solo tra i clienti inviati, `confidence` clampata [0,1]) e restituisce le proposte. Nessun dato viene salvato sul server. `applyClassifications` le applica **solo ai costi `da_validare`** e marca `validatedBy: "AI"`. Rate limit in memoria: 10 richieste/ora per IP.
+- **Per aggiungere un database** (fuori dal perimetro del prototipo): sostituisci `persist` con caricamento iniziale + scritture via server function, mantenendo invariata l'API delle azioni dello store. Vedi la sezione "Aggiungere un database" del `README.md`.
 
 ### Domain Rules (controllo di gestione)
 
-- **Primo margine = ricavi − costi variabili attribuiti** a quel cliente/commessa. Entrano nel margine **solo** i costi con `cost_type='variabile'`; `fisso` e `non_costo` sono ESCLUSI.
+- **Primo margine = ricavi − costi variabili attribuiti** a quel cliente/commessa. Entrano nel margine **solo** i costi con `costType='variabile'`; `fisso` e `non_costo` sono ESCLUSI.
 - **Classificazione costi:** `variabile` (varia col volume/commessa: freelance, materiali, subappalti, trasferte di progetto), `fisso` (struttura: affitto, stipendi, software, utenze, commercialista), `non_costo` (IVA, imposte, giroconti, rimborsi finanziamenti, movimenti non economici).
-- **Flusso di validazione:** i costi nascono `da_validare`; i ricavi sono `validato` di default. La coda "Revisione AI" (`revisione.tsx`) ordina i costi non validati per **banda di confidenza peggiore + importo decrescente**. Le bande derivano dalle soglie in `settings` (`threshold_high`/`threshold_medium`).
-- **Cancello morbido (soft gate):** `computeValidatedRevenueShare` misura la quota di ricavi validati; la pubblicazione (`setPublished` → `company.status`) è il gate verso la vista titolare. Via RLS, **l'owner vede azienda/clienti/transazioni SOLO se `status='pubblicata'`**; l'operatore vede e modifica sempre.
-- **Ruoli:** `operator` (inserisce, importa, valida, pubblica — CRUD completo) vs `owner` (sola lettura, dipende dalla pubblicazione). `computeMarginRows` mostra solo clienti con almeno una voce, ordinati per margine crescente (perdite in alto).
+- **Flusso di validazione:** i costi nascono `da_validare`; i ricavi sono `validato` di default. La coda "Revisione AI" (`revisione.tsx`) ordina i costi non validati per **banda di confidenza peggiore + importo decrescente**. Le bande derivano dalle soglie (`thresholds.high` / `thresholds.medium`).
+- **Cancello morbido (soft gate):** `computeValidatedRevenueShare` misura la quota di ricavi validati; la pubblicazione (`setPublished` → `company.status`) è il gate verso la vista titolare: con ruolo `owner` e azienda non pubblicata `MarginDashboard` mostra solo l'avviso.
+- **Ruoli:** `operator` (inserisce, importa, valida, pubblica) vs `owner` (sola lettura, dipende dalla pubblicazione). Il ruolo è un interruttore di prova, **non** un controllo di accesso. `computeMarginRows` mostra solo clienti con almeno una voce, ordinati per margine crescente (perdite in alto).
 
 ### Testing Rules
 
-- Il prototipo v0 **non ha framework di test** configurato (nessun vitest/jest/playwright in `package.json`). Non inventare comandi di test inesistenti.
-- Verifica delle modifiche tramite `bun run lint`, `bun run build` e prova manuale con `bun run dev`. Se introduci test, proponi prima lo stack e non assumere convenzioni preesistenti.
+- Il prototipo v0 **non ha framework di test** configurato. Non inventare comandi di test inesistenti.
+- Verifica delle modifiche tramite `bun run lint`, `bun run build` e prova manuale con `bun run dev`. Se introduci test, proponi prima lo stack.
 
 ### Code Quality & Style Rules
 
-- **Prettier** (`.prettierrc`): `printWidth: 100`, `semi: true`, `singleQuote: false` (virgolette doppie), `trailingComma: "all"`. **ESLint** flat config + plugin react-hooks/react-refresh/prettier. Lancia `bun run format` e `bun run lint` prima di consegnare.
+- **Prettier** (`.prettierrc`): `printWidth: 100`, `semi: true`, virgolette doppie, `trailingComma: "all"`. **ESLint** flat config + plugin react-hooks/react-refresh/prettier.
 - **Codice, commenti, UI, toast in italiano.** I file auto-generati restano in inglese.
-- **Naming:** route in kebab-case italiano (`area-dati`, `impostazioni`, `revisione`); componenti `PascalCase` (`MarginDashboard.tsx`); util/lib `camelCase`. UI shadcn in `src/components/ui` (kebab-case).
-- **Error handling:** centralizza con `reportError(action, error)` + `toast` (sonner). Errori SSR passano per `errorMiddleware` (`start.ts`) → `renderErrorPage`; gli error boundary di root sono in `__root.tsx`.
+- **Naming:** route in kebab-case italiano (`area-dati`, `impostazioni`, `revisione`); componenti `PascalCase`; util/lib `camelCase`. UI shadcn in `src/components/ui` (kebab-case).
+- **Error handling:** errori utente via `toast` (sonner). Errori SSR passano per `errorMiddleware` (`start.ts`) → `renderErrorPage`; gli error boundary di root sono in `__root.tsx`.
 
 ### Development Workflow Rules
 
-- **Git:** NON force-push, rebase, amend o squash di history già pushata. `main` va in produzione su Vercel: tienilo **sempre in stato funzionante**, lavora su branch per modifiche grandi.
-- **Supply-chain guard** (`bunfig.toml`): `minimumReleaseAge = 86400` (salta versioni pubblicate da <24h). Nessuna eccezione: **chiedi conferma all'utente** prima di aggiungere `minimumReleaseAgeExcludes`.
-- **Env vars:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (+ varianti `VITE_*` per il client), modello in `.env.example`. `SUPABASE_SERVICE_ROLE_KEY` solo server/edge. `.env` e `*.local` sono gitignorati — non committarli e non esporre la service role al client.
+- **Git:** NON force-push, rebase, amend o squash di history già pushata. `main` va in produzione su Vercel: tienilo **sempre in stato funzionante**.
+- **Supply-chain guard** (`bunfig.toml`): `minimumReleaseAge = 86400`. **Chiedi conferma all'utente** prima di aggiungere `minimumReleaseAgeExcludes`.
+- **Env vars:** solo `AI_API_KEY` (obbligatoria solo per l'AI), `AI_API_URL`, `AI_MODEL`, tutte lato server. Modello in `.env.example`. `.env` e `*.local` sono gitignorati.
 
 ### Critical Don't-Miss Rules (anti-pattern)
 
-- ❌ NON modificare a mano `src/routeTree.gen.ts` (lo rigenera il plugin del router); `types.ts` va riallineato allo schema dopo ogni migrazione.
-- ❌ NON importare `*.server.ts` a top-level in file che finiscono nel bundle client; NON usare il pacchetto `server-only`.
-- ❌ NON usare la service role key lato client né bypassare la RLS dal browser.
+- ❌ NON modificare a mano `src/routeTree.gen.ts`.
+- ❌ NON importare moduli solo-server a top-level in file che finiscono nel bundle client; NON usare il pacchetto `server-only`.
+- ❌ NON esporre `AI_API_KEY` al browser (niente variabili `VITE_*` con segreti).
 - ❌ NON includere costi `fisso`/`non_costo` nel calcolo del primo margine.
-- ❌ NON dimenticare di salvare la `classification` insieme a ogni voce (costo o ricavo).
-- ❌ NON fidarsi ciecamente dell'output dell'edge AI: valida `cost_type`, `client_id` e clampa `confidence` (già fatto in `classify/index.ts` — preservalo).
-- ❌ NON forzare `amount` positivo: le note di credito sono negative (il segno economico è `direction` × segno di `amount`).
+- ❌ NON fidarsi dell'output dell'AI: valida `cost_type`, `client_id` e clampa `confidence` (già fatto in `classify.functions.ts` — preservalo).
+- ❌ NON far sovrascrivere all'AI le voci già validate dall'operatore.
+- ❌ NON forzare `amount` positivo: le note di credito sono negative.
+- ❌ NON cambiare la forma dei dati persistiti senza bump di `version` + `migrate`.
 - ❌ NON riscrivere storia git pushata.
 
 ---
 
 ## Usage Guidelines
 
-**Per gli agenti AI:**
+**Per gli agenti AI:** leggi questo file prima di implementare codice, segui le regole e nel dubbio scegli l'opzione più restrittiva. Aggiorna il file quando emergono nuovi pattern.
 
-- Leggi questo file prima di implementare qualsiasi codice.
-- Segui TUTTE le regole esattamente; nel dubbio scegli l'opzione più restrittiva.
-- Aggiorna questo file quando emergono nuovi pattern.
+**Per gli umani:** mantienilo snello. Aggiornalo quando cambia lo stack o quando il prototipo evolve (es. database, login reale, test).
 
-**Per gli umani:**
-
-- Mantienilo snello e focalizzato sui bisogni degli agenti.
-- Aggiorna quando cambia lo stack o quando il prototipo evolve oltre il v0 (es. login reale, multi-azienda, framework di test).
-- Rivedi periodicamente e rimuovi regole diventate ovvie.
-
-Last Updated: 2026-06-22
+Last Updated: 2026-10-17

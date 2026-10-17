@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useLucidoStore, type AppRole } from "@/lib/store";
 
-export const Route = createFileRoute("/_authenticated/impostazioni")({
+export const Route = createFileRoute("/_app/impostazioni")({
   head: () => ({
     meta: [
       { title: "Impostazioni — Lucido" },
@@ -24,11 +24,6 @@ export const Route = createFileRoute("/_authenticated/impostazioni")({
 });
 
 function ImpostazioniPage() {
-  useEffect(() => {
-    const s = useLucidoStore.getState();
-    if (!s.loaded && !s.loading) void s.loadAll();
-  }, []);
-
   return (
     <div className="min-h-full bg-background">
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8 lg:py-10">
@@ -262,7 +257,7 @@ function DataSection() {
     <SectionCard
       icon={Database}
       title="Gestione dati"
-      description="Tutti i dati sono salvati nel database. Le azioni sotto riguardano la tua azienda."
+      description="I dati sono salvati solo in questo browser: nessun server li conserva. Cancellando i dati del sito si riparte dall'esempio."
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">

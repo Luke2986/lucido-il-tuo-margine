@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
@@ -16,7 +16,7 @@ import { ImportPanel } from "@/components/data-area/ImportPanel";
 import { FattureXmlImportPanel } from "@/components/data-area/FattureXmlImportPanel";
 import { useLucidoStore } from "@/lib/store";
 
-export const Route = createFileRoute("/_authenticated/area-dati")({
+export const Route = createFileRoute("/_app/area-dati")({
   head: () => ({
     meta: [
       { title: "Area dati — Lucido" },
@@ -30,11 +30,6 @@ function AreaDatiPage() {
   const [tab, setTab] = useState("voci");
   const reset = useLucidoStore((s) => s.resetToSeed);
 
-  // Carica i dati dal DB al mount
-  useEffect(() => {
-    const s = useLucidoStore.getState();
-    if (!s.loaded && !s.loading) void s.loadAll();
-  }, []);
 
 
 
@@ -50,7 +45,7 @@ function AreaDatiPage() {
               Area dati
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Inserisci, modifica e importa le voci. Tutto è salvato nel database della tua azienda.
+              Inserisci, modifica e importa le voci. Tutto resta salvato in questo browser.
             </p>
           </div>
           <AlertDialog>

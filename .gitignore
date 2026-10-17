@@ -32,3 +32,6 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# Configurazione locale di Claude Code
+.claude/

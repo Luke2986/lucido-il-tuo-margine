@@ -11,16 +11,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useLucidoStore, computeMarginRows, computeValidatedRevenueShare } from "@/lib/store";
-import { useHydratedStore } from "@/lib/use-store";
 import type { MarginRow, ConfidenceBand, Entry } from "@/lib/types";
 import { formatDate, formatEur, formatPercent, formatSignedEur } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
 export function MarginDashboard() {
-  const company = useHydratedStore((s) => s.company);
-  const clients = useHydratedStore((s) => s.clients);
-  const entries = useHydratedStore((s) => s.entries);
+  const company = useLucidoStore((s) => s.company);
+  const clients = useLucidoStore((s) => s.clients);
+  const entries = useLucidoStore((s) => s.entries);
+  const role = useLucidoStore((s) => s.role);
 
   const rows = useMemo(() => computeMarginRows(clients, entries), [clients, entries]);
   const coverage = useMemo(() => computeValidatedRevenueShare(entries), [entries]);
@@ -39,19 +39,23 @@ export function MarginDashboard() {
 
   const empty = rows.length === 0;
 
+  if (role === "owner" && company.status !== "pubblicata") return <NotPublished />;
+
   return (
     <div className="min-h-full bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-10">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {company.name} · {company.periodLabel}
+              {[company.name, company.periodLabel].filter(Boolean).join(" · ") || "La tua azienda"}
             </p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               Quali clienti ti fanno guadagnare
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pubblicato il {formatDate(company.publishedAt)} · sola lettura
+              {company.status === "pubblicata" && company.publishedAt
+                ? `Pubblicato il ${formatDate(company.publishedAt)} · sola lettura`
+                : "Bozza: non ancora pubblicato al titolare"}
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
@@ -127,6 +131,18 @@ function EmptyDashboard() {
         </Button>
         <ResetSeedButton />
       </div>
+    </div>
+  );
+}
+
+function NotPublished() {
+  return (
+    <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-8">
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">Cruscotto non ancora pubblicato</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        L'operatore sta ancora preparando i numeri. Il titolare li vede quando l'azienda viene pubblicata da
+        Impostazioni.
+      </p>
     </div>
   );
 }
