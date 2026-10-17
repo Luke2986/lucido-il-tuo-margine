@@ -98,7 +98,7 @@ async function callAI(system: string, payload: unknown): Promise<unknown[]> {
 }
 
 export const classifyCosts = createServerFn({ method: "POST" })
-  .inputValidator(inputSchema)
+  .validator(inputSchema)
   .handler(async ({ data }): Promise<{ items: AiClassification[]; skipped: number }> => {
     const { getRequestIP } = await import("@tanstack/react-start/server");
     checkRateLimit(getRequestIP({ xForwardedFor: true }) ?? "sconosciuto");

@@ -11,9 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AppRevisioneRouteImport } from './routes/_app/revisione'
-import { Route as AppImpostazioniRouteImport } from './routes/_app/impostazioni'
 import { Route as AppAreaDatiRouteImport } from './routes/_app/area-dati'
+import { Route as AppImpostazioniRouteImport } from './routes/_app/impostazioni'
+import { Route as AppRevisioneRouteImport } from './routes/_app/revisione'
 
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
@@ -24,9 +24,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppRevisioneRoute = AppRevisioneRouteImport.update({
-  id: '/revisione',
-  path: '/revisione',
+const AppAreaDatiRoute = AppAreaDatiRouteImport.update({
+  id: '/area-dati',
+  path: '/area-dati',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppImpostazioniRoute = AppImpostazioniRouteImport.update({
@@ -34,9 +34,9 @@ const AppImpostazioniRoute = AppImpostazioniRouteImport.update({
   path: '/impostazioni',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppAreaDatiRoute = AppAreaDatiRouteImport.update({
-  id: '/area-dati',
-  path: '/area-dati',
+const AppRevisioneRoute = AppRevisioneRouteImport.update({
+  id: '/revisione',
+  path: '/revisione',
   getParentRoute: () => AppRouteRoute,
 } as any)
 
@@ -94,11 +94,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/revisione': {
-      id: '/_app/revisione'
-      path: '/revisione'
-      fullPath: '/revisione'
-      preLoaderRoute: typeof AppRevisioneRouteImport
+    '/_app/area-dati': {
+      id: '/_app/area-dati'
+      path: '/area-dati'
+      fullPath: '/area-dati'
+      preLoaderRoute: typeof AppAreaDatiRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/impostazioni': {
@@ -108,11 +108,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppImpostazioniRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/area-dati': {
-      id: '/_app/area-dati'
-      path: '/area-dati'
-      fullPath: '/area-dati'
-      preLoaderRoute: typeof AppAreaDatiRouteImport
+    '/_app/revisione': {
+      id: '/_app/revisione'
+      path: '/revisione'
+      fullPath: '/revisione'
+      preLoaderRoute: typeof AppRevisioneRouteImport
       parentRoute: typeof AppRouteRoute
     }
   }
