@@ -8,19 +8,18 @@ status: 'complete'
 project_type: 'brownfield'
 optimized_for_llm: true
 repo_path: 'lucido-il-tuo-margine'
-supabase_project_ref: 'xzsjnzibyszhsjqvchee'
 ---
 
 # Project Context for AI Agents — Lucido
 
-_Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codice in questo progetto. Focus su dettagli non ovvi. Prototipo v0 brownfield nato su Lovable, ora indipendente (Vercel/Replit + Supabase proprio). Licenza PolyForm Noncommercial 1.0.0. Codice e commenti in italiano; commit/PR in inglese o italiano ma in stato funzionante._
+_Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codice in questo progetto. Focus su dettagli non ovvi. Prototipo v0 brownfield, indipendente (Vercel o server Node + Supabase). Licenza PolyForm Noncommercial 1.0.0. Codice e commenti in italiano; commit/PR in inglese o italiano ma in stato funzionante._
 
 ---
 
 ## Technology Stack & Versions
 
 - **Runtime/package manager:** Bun (`bun.lock`, `bunfig.toml`). Script: `bun run dev | build | lint | format`.
-- **Framework:** TanStack Start `^1.167` + TanStack Router `^1.168` (routing file-based, SSR via Nitro, target build default Cloudflare).
+- **Framework:** TanStack Start `^1.167` + TanStack Router `^1.168` (routing file-based, SSR via Nitro: preset `vercel` o `node-server`).
 - **UI:** React `^19.2` + shadcn/ui (style `new-york`, baseColor `slate`) + Radix primitives. Icone `lucide-react`.
 - **Styling:** Tailwind CSS **v4** (`@tailwindcss/vite`), CSS variables, entry `src/styles.css`, `tw-animate-css`.
 - **Build:** Vite `^8` con plugin espliciti in `vite.config.ts`; Nitro (beta) in build: preset `vercel` se `VERCEL` è definita, altrimenti `node-server` (`bun run start`).
@@ -53,7 +52,7 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 
 ### Data Model & Supabase Rules
 
-- **Tre client Supabase distinti, tutti auto-generati ("Do not edit directly"):**
+- **Tre client Supabase distinti** (`types.ts` si rigenera con `supabase gen types typescript`):
   - `client.ts` → browser, **anon/publishable key**, Proxy lazy. Import: `import { supabase } from "@/integrations/supabase/client"`.
   - `client.server.ts` → **service role, bypassa RLS**. Solo operazioni server fidate. **Mai** import top-level in file di route o `*.functions.ts` (finiscono nel bundle browser): usa `const { supabaseAdmin } = await import("@/integrations/supabase/client.server")` dentro l'handler.
   - `auth-middleware.ts` (`requireSupabaseAuth`) → query per-utente con RLS dal JWT. `auth-attacher.ts` (`attachSupabaseAuth`) → allega il token.
@@ -64,7 +63,7 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 - **RLS con funzioni `SECURITY DEFINER`** (`is_member`, `has_role_in_company`, `is_company_published`) per evitare ricorsione nelle policy. Regole per nuove funzioni: `LANGUAGE sql STABLE SECURITY DEFINER`, sempre **`SET search_path = public`**, poi `REVOKE EXECUTE ... FROM PUBLIC` e `GRANT EXECUTE ... TO authenticated`.
 - **Migrazioni canoniche:** `supabase/migrations/*` (timestamp).
 - **Vista `margin_by_client`** (`security_invoker = true`): calcola il primo margine lato DB; eredita RLS dalle tabelle. Mantienila allineata a `computeMarginRows` in `store.ts`.
-- **Edge function `supabase/functions/classify`:** `verify_jwt = true`; verifica membership via service client; solo ruolo `operator`; LLM via API compatibile OpenAI: secret `AI_API_KEY` (default Gemini `gemini-2.5-flash`, override con `AI_API_URL`/`AI_MODEL`; fallback temporaneo `LOVABLE_API_KEY` finché gira su Lovable Cloud), batch da 40. Non sovrascrive voci validate durante l'elaborazione. Riclassifica solo costi senza classification o in stato `ai_proposta`. Valida output AI: whitelist `cost_type`, `client_id` solo se tra i clienti validi, `confidence` clampata [0,1]. Gestisce 402 (crediti esauriti) / 429 (rate limit). Invocata via `supabase.functions.invoke("classify", { body: { companyId } })`.
+- **Edge function `supabase/functions/classify`:** `verify_jwt = true`; verifica membership via service client; solo ruolo `operator`; LLM via API compatibile OpenAI: secret `AI_API_KEY` (default Gemini `gemini-2.5-flash`, override con `AI_API_URL`/`AI_MODEL`), batch da 40. Non sovrascrive voci validate durante l'elaborazione. Riclassifica solo costi senza classification o in stato `ai_proposta`. Valida output AI: whitelist `cost_type`, `client_id` solo se tra i clienti validi, `confidence` clampata [0,1]. Gestisce 402 (crediti esauriti) / 429 (rate limit). Invocata via `supabase.functions.invoke("classify", { body: { companyId } })`.
 
 ### Domain Rules (controllo di gestione)
 
@@ -88,14 +87,13 @@ _Regole critiche e pattern che gli agenti AI DEVONO seguire quando scrivono codi
 
 ### Development Workflow Rules
 
-- **Git:** NON force-push, rebase, amend o squash di history già pushata. `main` alimenta Replit e Vercel: tienilo **sempre in stato funzionante**, lavora su branch per modifiche grandi.
-- **Compatibilità temporanea:** `isNotMigrated()` in `store.ts` e il fallback `LOVABLE_API_KEY` in `classify` servono solo finché esiste un DB senza la migrazione `20261016120000`. Rimuovili quando tutti gli ambienti puntano al Supabase migrato.
+- **Git:** NON force-push, rebase, amend o squash di history già pushata. `main` va in produzione su Vercel: tienilo **sempre in stato funzionante**, lavora su branch per modifiche grandi.
 - **Supply-chain guard** (`bunfig.toml`): `minimumReleaseAge = 86400` (salta versioni pubblicate da <24h). Nessuna eccezione: **chiedi conferma all'utente** prima di aggiungere `minimumReleaseAgeExcludes`.
-- **Env vars:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (+ varianti `VITE_*` per il client). `SUPABASE_SERVICE_ROLE_KEY` solo server/edge. `.env`, `.dev.vars`, `*.local` sono gitignorati — non committarli e non esporre la service role al client.
+- **Env vars:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (+ varianti `VITE_*` per il client), modello in `.env.example`. `SUPABASE_SERVICE_ROLE_KEY` solo server/edge. `.env` e `*.local` sono gitignorati — non committarli e non esporre la service role al client.
 
 ### Critical Don't-Miss Rules (anti-pattern)
 
-- ❌ NON modificare file auto-generati: `src/routeTree.gen.ts` e `src/integrations/supabase/{client.ts, client.server.ts, types.ts, auth-middleware.ts, auth-attacher.ts}`.
+- ❌ NON modificare a mano `src/routeTree.gen.ts` (lo rigenera il plugin del router); `types.ts` va riallineato allo schema dopo ogni migrazione.
 - ❌ NON importare `*.server.ts` a top-level in file che finiscono nel bundle client; NON usare il pacchetto `server-only`.
 - ❌ NON usare la service role key lato client né bypassare la RLS dal browser.
 - ❌ NON includere costi `fisso`/`non_costo` nel calcolo del primo margine.

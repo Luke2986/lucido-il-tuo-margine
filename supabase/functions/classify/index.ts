@@ -11,7 +11,6 @@ const CORS = {
 };
 
 const GEMINI_OPENAI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 interface AiConfig {
   url: string;
@@ -21,17 +20,12 @@ interface AiConfig {
 
 function aiConfig(): AiConfig | null {
   const key = Deno.env.get("AI_API_KEY");
-  if (key) {
-    return {
-      url: Deno.env.get("AI_API_URL") ?? GEMINI_OPENAI_URL,
-      key,
-      model: Deno.env.get("AI_MODEL") ?? "gemini-2.5-flash",
-    };
-  }
-  // Solo finché il progetto gira ancora su Lovable Cloud: rimuovere dopo il passaggio al Supabase proprio.
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  if (lovableKey) return { url: LOVABLE_AI_URL, key: lovableKey, model: "google/gemini-2.5-flash" };
-  return null;
+  if (!key) return null;
+  return {
+    url: Deno.env.get("AI_API_URL") ?? GEMINI_OPENAI_URL,
+    key,
+    model: Deno.env.get("AI_MODEL") ?? "gemini-2.5-flash",
+  };
 }
 const BATCH_SIZE = 40;
 

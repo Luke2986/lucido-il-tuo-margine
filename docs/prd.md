@@ -45,7 +45,7 @@ classification:
 
 **Modello.** Pagatore = titolare (B2B). Prezzo ancorato al costo di un controller / CFO frazionale (~390€+/mese + setup una tantum; ACV = canone×12 + setup), mai al puro SaaS. Beachhead = servizi B2B project-based data-ready, **da confermare** con la domanda #1 (quale settore servono CFO frazionale + commercialisti del network).
 
-**Stato.** Brownfield: v0 "Lucido" già costruito (TanStack Start + Supabase/Lovable Cloud, edge function di classificazione AI attiva). Fase: pre-MVP, validazione 4 settimane, target ≥2 piloti paganti a prezzo pieno.
+**Stato.** Brownfield: v0 "Lucido" già costruito (TanStack Start + Supabase, edge function di classificazione AI attiva). Fase: pre-MVP, validazione 4 settimane, target ≥2 piloti paganti a prezzo pieno.
 
 ---
 
@@ -78,7 +78,7 @@ classification:
 - **Accuratezza mappatura pesata per impatto ≥90%** sulle voci ad alto impatto (vs ground truth indipendente: commercialista/cliente). [MVP — gate di fiducia; stop-trigger se <90% su voci critiche]
 - **Cancello morbido** operativo: l'owner vede la vista titolare SOLO con config validata/pubblicata (`company.status='pubblicata'`, via RLS). [MVP — già implementato in v0]
 - **Validazione output AI**: whitelist `cost_type`, `client_id` solo se tra i clienti validi, `confidence` clampata [0,1], gestione 402 (crediti)/429 (rate limit). [MVP — già implementato in v0]
-- **Compliance / data protection**: GDPR sui dati finanziari (service-role mai lato client, `.env`/`.dev.vars` gitignorati, RLS per-azienda); art. 2086 = soglie informative [V1/V2]. **Fuori scope: PCI-DSS, KYC/AML, payment fraud** (sistema read-only, nessuna movimentazione denaro).
+- **Compliance / data protection**: GDPR sui dati finanziari (service-role mai lato client, `.env` gitignorato, RLS per-azienda); art. 2086 = soglie informative [V1/V2]. **Fuori scope: PCI-DSS, KYC/AML, payment fraud** (sistema read-only, nessuna movimentazione denaro).
 
 ### Parametri provvisori (proposte iniziali — da confermare col 1° pilota)
 
@@ -196,7 +196,7 @@ classification:
 
 ### Compliance & Regulatory
 
-- **GDPR** [MVP]: i dati finanziari sono dati personali dell'azienda cliente. Service-role mai lato client, RLS per-azienda, `.env`/`.dev.vars` gitignorati. Minimizzazione + base giuridica (contratto). DPA col cliente; sub-processor (Supabase/Lovable, gateway AI) mappati.
+- **GDPR** [MVP]: i dati finanziari sono dati personali dell'azienda cliente. Service-role mai lato client, RLS per-azienda, `.env` gitignorato. Minimizzazione + base giuridica (contratto). DPA col cliente; sub-processor (Supabase, hosting, provider AI) mappati.
 - **FatturaPA / SdI** [MVP import passivo · V2 integrazione attiva]: formato XML FatturaPA come input. Nessuna trasmissione a SdI in MVP (solo lettura di file già emessi).
 - **Art. 2086 c.c. / Codice della Crisi** [V1 soglie informative → V2 completo]: rilevazione tempestiva dei segnali di crisi. **Disclaimer esplicito**: Lucido è strumento informativo/di supporto, NON certifica l'adeguatezza degli assetti né sostituisce l'organo amministrativo o il revisore.
 - **PSD2 / open banking** [V2]: se si attiva l'aggregazione conti serve un AISP/agent licenziato (provider terzo), non in casa.
@@ -211,7 +211,7 @@ classification:
 
 ### Integration Requirements
 
-- **MVP**: import file FatturaPA XML + estratto conto CSV/Excel (`xlsx`); gateway **Lovable AI** (`LOVABLE_API_KEY` auto-provisionata, modello `google/gemini-2.5-flash`, nessuna chiave esterna).
+- **MVP**: import file FatturaPA XML + estratto conto CSV/Excel (`xlsx`); LLM via API compatibile OpenAI (secret `AI_API_KEY`, default Gemini `gemini-2.5-flash`).
 - **V2**: SdI (fatture in automatico) · open-banking PSD2 (estratti conto in automatico) · gestionali → riduce l'onboarding concierge.
 
 ### Risk Mitigations (dal premortem)
@@ -288,7 +288,7 @@ SaaS B2B multi-tenant, owner-managed. Pagatore = titolare. Consegna **concierge*
 
 **Integration list**
 
-- **MVP** [già implementato in v0]: import FatturaPA XML + estratto conto CSV/Excel (`xlsx`); gateway **Lovable AI** (`google/gemini-2.5-flash`).
+- **MVP** [già implementato in v0]: import FatturaPA XML + estratto conto CSV/Excel (`xlsx`); LLM via API compatibile OpenAI (default Gemini `gemini-2.5-flash`).
 - **V2**: SdI · open-banking PSD2 · gestionali.
 
 **Compliance reqs** → vedi *Domain-Specific Requirements* (GDPR, art. 2086/Codice Crisi, RLS/service-role). Fuori scope: PCI/KYC/AML.
@@ -309,7 +309,7 @@ SaaS B2B multi-tenant, owner-managed. Pagatore = titolare. Consegna **concierge*
 
 - **Approccio MVP**: *problem-solving + revenue MVP* combinati — validare dolore-margine + WTP a basso costo con piloti paganti. **Thin nell'UI, NON nel data layer** (ingestione + classificazione = dove si gioca tutto: fossato + R3).
 - **Filosofia**: "il valore prima del cancello" — AHA da fetta sottile *prima* del setup completo.
-- **Risorse**: founder + 1 commercialista/CFO nel ciclo (concierge). Stack v0 già a terra (Lovable/Supabase). Niente team grande.
+- **Risorse**: founder + 1 commercialista/CFO nel ciclo (concierge). Stack v0 già a terra (TanStack Start/Supabase). Niente team grande.
 
 ### MVP Feature Set (Phase 1) — già implementato in v0
 
@@ -437,12 +437,12 @@ SaaS B2B multi-tenant, owner-managed. Pagatore = titolare. Consegna **concierge*
 ### Integration
 
 - **NFR16**: Import **tollerante**: file malformati segnalati, non bloccano l'intero batch; pre-pulizia concierge per i casi non standard. [MVP]
-- **NFR17**: La dipendenza dal provider AI è isolata in **un solo punto**; il cambio di modello/provider non tocca il resto del sistema. *(v0: gateway Lovable AI, nessuna chiave esterna)* [MVP]
+- **NFR17**: La dipendenza dal provider AI è isolata in **un solo punto**; il cambio di modello/provider non tocca il resto del sistema. *(v0: edge function `classify`, provider configurabile con `AI_API_URL`/`AI_MODEL`)* [MVP]
 - **NFR18**: Integrazioni V2 (SdI/PSD2/gestionali) via provider terzi licenziati, isolate dietro adapter. [V2]
 
 ### Operatività & Vincoli di sviluppo
 
-- **NFR19**: Branch sempre in **stato funzionante** (sync Lovable); niente force-push/rebase/amend di history pushata. [MVP]
+- **NFR19**: Branch sempre in **stato funzionante** (`main` va in produzione); niente force-push/rebase/amend di history pushata. [MVP]
 - **NFR20**: **Supply-chain guard**: pacchetti pubblicati <24h saltati salvo eccezione approvata. [MVP]
 - **NFR21**: UI/messaggi in **italiano**; formattazione numerica/data **it-IT centralizzata** (un solo punto, non ad-hoc nei componenti). *(v0: `format.ts`)* [MVP]
 

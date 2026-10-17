@@ -125,7 +125,7 @@ _I rilievi vengono aggiunti man mano che la validazione procede._
 
 ### Leakage by Category (solo FR/NFR)
 - **FR — Frontend/Backend/DB/Cloud/Lib:** 0 leakage reale (FatturaPA/CSV/Excel/SdI/PSD2 = formati/integrazioni capability-relevant).
-- **NFR — riferimenti implementativi:** ~6 — RLS, `verify_jwt=true`, edge function, gateway Lovable AI, `format.ts`, service-role key (NFR7, NFR8, NFR10, NFR17, NFR21).
+- **NFR — riferimenti implementativi:** ~6 — RLS, `verify_jwt=true`, edge function, gateway AI, `format.ts`, service-role key (NFR7, NFR8, NFR10, NFR17, NFR21).
 
 ### Summary
 **Total Implementation Leakage Violations:** ~6 (tutte negli NFR, brownfield-anchored)
@@ -229,7 +229,7 @@ _I rilievi vengono aggiunti man mano che la validazione procede._
 ### Top 3 Improvements
 1. **Fissare i numeri provvisori** (soglia ore/report X, soglia confidenza cancello morbido, target ARR) — sbloccano stop-trigger e rendono pienamente misurabili NFR1/3/12.
 2. **Journey dedicate per cassa 13w e alert art. 2086 (V1)** alla progettazione di quella fase — chiude l'unico gap di tracciabilità informativo.
-3. **Spostare il meccanismo tech specifico** (RLS/verify_jwt/Lovable AI/format.ts) dagli NFR al documento di architettura, tenendo capacità+metrica nel PRD.
+3. **Spostare il meccanismo tech specifico** (RLS/verify_jwt/gateway AI/format.ts) dagli NFR al documento di architettura, tenendo capacità+metrica nel PRD.
 
 ### Summary
 **This PRD is:** un PRD brownfield forte, denso e ben tracciato, che separa con onestà MVP già costruito / paid-MVP / visione.

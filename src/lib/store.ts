@@ -95,12 +95,6 @@ function bandFromConfidence(c: number, t: ConfidenceThresholds): ConfidenceBand 
   return "bassa";
 }
 
-// DB senza la migrazione 20261016120000 (es. il vecchio progetto Lovable Cloud):
-// colonna o funzione mancante. Rimuovere quando tutti gli ambienti sono migrati.
-function isNotMigrated(error: { code?: string } | null): boolean {
-  return !!error && ["42703", "PGRST204", "PGRST202"].includes(error.code ?? "");
-}
-
 function reportError(action: string, error: unknown) {
   console.error(`[lucido] ${action} failed`, error);
   toast.error(`Salvataggio fallito: ${action}`);
@@ -196,8 +190,8 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
 
       if (role === "operator") {
         const seededRes = await supabase.from("companies").select("seeded_at").eq("id", companyId).maybeSingle();
-        if (seededRes.error && !isNotMigrated(seededRes.error)) throw seededRes.error;
-        if (!seededRes.error && seededRes.data && !seededRes.data.seeded_at) await seedCompany(companyId);
+        if (seededRes.error) throw seededRes.error;
+        if (seededRes.data && !seededRes.data.seeded_at) await seedCompany(companyId);
       }
 
       const [companyRes, settingsRes, clientsRes, txRes, clsRes] = await Promise.all([
@@ -286,10 +280,7 @@ export const useLucidoStore = create<LucidoState>()((set, get) => ({
     if (!userId || !companyId) return;
     const prev = get().role;
     set({ role });
-    let { error } = await supabase.rpc("set_my_role", { _company_id: companyId, _role: role });
-    if (isNotMigrated(error)) {
-      ({ error } = await supabase.from("memberships").update({ role }).eq("user_id", userId).eq("company_id", companyId));
-    }
+    const { error } = await supabase.rpc("set_my_role", { _company_id: companyId, _role: role });
     if (error) {
       set({ role: prev });
       reportError("cambio ruolo", error);
@@ -490,10 +481,9 @@ async function seedCompany(companyId: string) {
     period_label: SEED_COMPANY.periodLabel,
     published_at: SEED_COMPANY.publishedAt || null,
     status: "pubblicata",
+    seeded_at: new Date().toISOString(),
   }).eq("id", companyId);
   if (upC.error) throw upC.error;
-  const upSeeded = await supabase.from("companies").update({ seeded_at: new Date().toISOString() }).eq("id", companyId);
-  if (upSeeded.error && !isNotMigrated(upSeeded.error)) throw upSeeded.error;
 
   const upS = await supabase.from("settings").upsert(
     { company_id: companyId, threshold_high: SEED_THRESHOLDS.high, threshold_medium: SEED_THRESHOLDS.medium },

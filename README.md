@@ -136,7 +136,11 @@ git clone https://github.com/Luke2986/lucido-il-tuo-margine.git
 cd lucido-il-tuo-margine && bun install
 ```
 
-Crea o aggiorna il file `.env` nella radice del progetto con l'URL e la chiave **pubblica** (anon/publishable) del tuo progetto Supabase. Vedi [Variabili d'ambiente](#variabili-dambiente).
+Copia `.env.example` in `.env` e inserisci l'URL e la chiave **pubblica** (anon/publishable) del tuo progetto Supabase. Vedi [Variabili d'ambiente](#variabili-dambiente).
+
+```bash
+cp .env.example .env
+```
 
 ```bash
 bun run dev
@@ -196,7 +200,7 @@ Funziona con qualunque provider che esponga l'endpoint `chat/completions` in for
 3. Aggiungi le [variabili d'ambiente](#variabili-dambiente) per *Production* e *Preview*.
 4. Deploy. Se usi un dominio tuo, aggiungilo anche in Supabase → *Authentication* → *URL Configuration*.
 
-### Replit o qualsiasi server Node
+### Server Node (qualsiasi hosting)
 
 ```bash
 bun install && bun run build

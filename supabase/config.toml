@@ -1,4 +1,4 @@
-project_id = "xzsjnzibyszhsjqvchee"
+project_id = "lucido-il-tuo-margine"
 
 [functions.classify]
 verify_jwt = true
