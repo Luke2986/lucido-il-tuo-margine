@@ -2,6 +2,8 @@
 
 **Quali clienti ti fanno davvero guadagnare?**
 
+**Demo:** <https://lucido-il-tuo-margine.vercel.app> (dati di esempio, nessuna registrazione)
+
 Lucido è un cruscotto di controllo di gestione pensato per micro e piccole SRL italiane di servizi B2B: aziende con qualche decina o centinaia di migliaia di euro di fatturato, senza un controller interno, dove il commercialista si occupa degli adempimenti ma nessuno guarda il **primo margine per cliente**.
 
 Lucido prende i dati che l'azienda produce già (fatture elettroniche FatturaPA, estratti conto, fogli Excel), classifica i costi con l'aiuto di un'AI e mostra, cliente per cliente o commessa per commessa, quanto resta davvero dopo i costi variabili. Ogni numero è spiegato e nessun dato arriva al titolare senza la validazione di un operatore.
