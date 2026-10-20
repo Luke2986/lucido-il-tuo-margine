@@ -3,17 +3,33 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -53,7 +69,13 @@ export function ClientsManager() {
             Le voci attribuite a un cliente eliminato diventano non attribuite.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
+        <Dialog
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) setEditing(null);
+          }}
+        >
           <DialogTrigger asChild>
             <Button size="sm" onClick={() => setEditing(null)}>
               <Plus className="mr-1 h-4 w-4" /> Nuovo
@@ -83,12 +105,23 @@ export function ClientsManager() {
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={() => { setEditing(c); setOpen(true); }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditing(c);
+                    setOpen(true);
+                  }}
+                >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </AlertDialogTrigger>
@@ -103,7 +136,10 @@ export function ClientsManager() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annulla</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => { removeClient(c.id); toast.success("Cliente eliminato"); }}
+                        onClick={() => {
+                          removeClient(c.id);
+                          toast.success("Cliente eliminato");
+                        }}
                       >
                         Elimina
                       </AlertDialogAction>
@@ -149,7 +185,9 @@ function ClientFormDialog({
         <div className="space-y-1.5">
           <Label htmlFor="cl-kind">Tipo</Label>
           <Select value={kind} onValueChange={(v) => setKind(v as ClientKind)}>
-            <SelectTrigger id="cl-kind"><SelectValue /></SelectTrigger>
+            <SelectTrigger id="cl-kind">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="cliente">Cliente</SelectItem>
               <SelectItem value="commessa">Commessa</SelectItem>

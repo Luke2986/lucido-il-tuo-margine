@@ -7,8 +7,7 @@ export const Route = createFileRoute("/_app/")({
       { title: "Lucido — Quali clienti ti fanno guadagnare" },
       {
         name: "description",
-        content:
-          "Primo margine per cliente e commessa, spiegato. Vista titolare in sola lettura.",
+        content: "Primo margine per cliente e commessa, spiegato. Vista titolare in sola lettura.",
       },
     ],
   }),

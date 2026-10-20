@@ -1,5 +1,16 @@
 import { useMemo } from "react";
-import { ChevronRight, TrendingDown, TrendingUp, ShieldCheck, AlertCircle, FileText, Landmark, Sparkles, User, Pencil } from "lucide-react";
+import {
+  ChevronRight,
+  TrendingDown,
+  TrendingUp,
+  ShieldCheck,
+  AlertCircle,
+  FileText,
+  Landmark,
+  Sparkles,
+  User,
+  Pencil,
+} from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -88,8 +99,8 @@ export function MarginDashboard() {
                 <MarginList rows={validated} onSelect={setSelected} />
               )}
               <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                <strong className="text-foreground">Primo margine</strong> = ricavi − costi variabili.
-                I costi fissi non sono ripartiti.
+                <strong className="text-foreground">Primo margine</strong> = ricavi − costi
+                variabili. I costi fissi non sono ripartiti.
               </p>
             </section>
 
@@ -138,10 +149,12 @@ function EmptyDashboard() {
 function NotPublished() {
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-8">
-      <h1 className="text-lg font-semibold tracking-tight text-foreground">Cruscotto non ancora pubblicato</h1>
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">
+        Cruscotto non ancora pubblicato
+      </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        L'operatore sta ancora preparando i numeri. Il titolare li vede quando l'azienda viene pubblicata da
-        Impostazioni.
+        L'operatore sta ancora preparando i numeri. Il titolare li vede quando l'azienda viene
+        pubblicata da Impostazioni.
       </p>
     </div>
   );
@@ -166,7 +179,12 @@ function EmptyList({ text }: { text: string }) {
 
 // ---------- Riepilogo ----------
 
-function SummaryStrip(props: { losing: number; margin: number; revenue: number; coverage: number }) {
+function SummaryStrip(props: {
+  losing: number;
+  margin: number;
+  revenue: number;
+  coverage: number;
+}) {
   const { losing, margin, revenue, coverage } = props;
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -174,14 +192,26 @@ function SummaryStrip(props: { losing: number; margin: number; revenue: number; 
         label="Clienti in perdita"
         value={String(losing)}
         accent={losing > 0 ? "destructive" : "positive"}
-        icon={losing > 0 ? <AlertCircle className="h-4 w-4" aria-hidden /> : <ShieldCheck className="h-4 w-4" aria-hidden />}
+        icon={
+          losing > 0 ? (
+            <AlertCircle className="h-4 w-4" aria-hidden />
+          ) : (
+            <ShieldCheck className="h-4 w-4" aria-hidden />
+          )
+        }
         hint={losing > 0 ? "Da affrontare per primi" : "Nessun cliente in perdita"}
       />
       <StatCard
         label="Margine totale del periodo"
         value={formatEur(margin)}
         accent={margin < 0 ? "destructive" : "positive"}
-        icon={margin < 0 ? <TrendingDown className="h-4 w-4" aria-hidden /> : <TrendingUp className="h-4 w-4" aria-hidden />}
+        icon={
+          margin < 0 ? (
+            <TrendingDown className="h-4 w-4" aria-hidden />
+          ) : (
+            <TrendingUp className="h-4 w-4" aria-hidden />
+          )
+        }
         hint={`Su ${formatEur(revenue)} di ricavo validato`}
       />
       <StatCard
@@ -206,8 +236,8 @@ function StatCard(props: {
     props.accent === "destructive"
       ? "text-destructive"
       : props.accent === "positive"
-      ? "text-positive"
-      : "text-foreground";
+        ? "text-positive"
+        : "text-foreground";
   return (
     <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -228,7 +258,9 @@ function SectionHeader(props: { id: string; title: string; hint: string; tone?: 
       <h2 id={props.id} className="text-lg font-semibold tracking-tight">
         {props.title}
       </h2>
-      <p className={`text-xs ${props.tone === "warning" ? "text-warning-foreground" : "text-muted-foreground"}`}>
+      <p
+        className={`text-xs ${props.tone === "warning" ? "text-warning-foreground" : "text-muted-foreground"}`}
+      >
         {props.hint}
       </p>
     </div>
@@ -245,7 +277,9 @@ function MarginList({
   muted?: boolean;
 }) {
   return (
-    <ul className={`overflow-hidden rounded-lg border border-border bg-card shadow-sm ${muted ? "opacity-90" : ""}`}>
+    <ul
+      className={`overflow-hidden rounded-lg border border-border bg-card shadow-sm ${muted ? "opacity-90" : ""}`}
+    >
       {rows.map((row, i) => (
         <li key={row.clientId} className={i > 0 ? "border-t border-border" : ""}>
           <MarginRowItem row={row} onSelect={onSelect} />
@@ -271,12 +305,18 @@ function MarginRowItem({ row, onSelect }: { row: MarginRow; onSelect: (r: Margin
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-semibold text-foreground sm:text-base">{row.name}</p>
+            <p className="truncate text-sm font-semibold text-foreground sm:text-base">
+              {row.name}
+            </p>
             {row.kind === "commessa" && (
-              <Badge variant="outline" className="text-[10px] font-medium uppercase">commessa</Badge>
+              <Badge variant="outline" className="text-[10px] font-medium uppercase">
+                commessa
+              </Badge>
             )}
             {row.hasUnvalidated && (
-              <Badge className="bg-warning text-warning-foreground hover:bg-warning">Da validare</Badge>
+              <Badge className="bg-warning text-warning-foreground hover:bg-warning">
+                Da validare
+              </Badge>
             )}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -292,17 +332,25 @@ function MarginRowItem({ row, onSelect }: { row: MarginRow; onSelect: (r: Margin
         </div>
 
         <div className="hidden text-right sm:block">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Costi variabili</p>
-          <p className="tabular text-sm font-medium text-foreground">{formatEur(row.variableCosts)}</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Costi variabili
+          </p>
+          <p className="tabular text-sm font-medium text-foreground">
+            {formatEur(row.variableCosts)}
+          </p>
         </div>
 
         <div className="text-right">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Primo margine</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Primo margine
+          </p>
           <p className={`tabular text-lg font-semibold ${marginColor}`}>
             <span aria-hidden>{sign}</span>
             <span className="sr-only">{row.isLoss ? "in perdita" : "in attivo"}</span>
             {formatEur(absMargin)}
-            <span className="ml-1 text-xs font-medium">({formatPercent(Math.abs(row.marginPct))})</span>
+            <span className="ml-1 text-xs font-medium">
+              ({formatPercent(Math.abs(row.marginPct))})
+            </span>
           </p>
         </div>
 
@@ -349,8 +397,8 @@ function WhyContent({ row }: { row: MarginRow }) {
           fronte di <strong className="tabular">{formatEur(row.revenue)}</strong> di ricavo → primo
           margine{" "}
           <strong className={`tabular ${marginColor}`}>
-            {row.isLoss ? `−${formatEur(absMargin)}` : `+${formatEur(absMargin)}`}{" "}
-            ({formatPercent(Math.abs(row.marginPct))})
+            {row.isLoss ? `−${formatEur(absMargin)}` : `+${formatEur(absMargin)}`} (
+            {formatPercent(Math.abs(row.marginPct))})
           </strong>
           .
         </SheetDescription>
@@ -370,15 +418,17 @@ function WhyContent({ row }: { row: MarginRow }) {
 
       <DetailBlock title={`Costi variabili attribuiti · ${formatEur(row.variableCosts)}`}>
         {row.costs.length === 0 ? (
-          <li className="px-3 py-2.5 text-sm text-muted-foreground">Nessun costo variabile attribuito.</li>
+          <li className="px-3 py-2.5 text-sm text-muted-foreground">
+            Nessun costo variabile attribuito.
+          </li>
         ) : (
           row.costs.map((c) => <CostLineItem key={c.id} entry={c} />)
         )}
       </DetailBlock>
 
       <p className="mt-6 rounded-md border border-border bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">
-        I costi fissi (struttura, stipendi, software comuni) non sono ripartiti sul singolo
-        cliente. Solo le voci validate dall'operatore entrano nei totali pubblicati.
+        I costi fissi (struttura, stipendi, software comuni) non sono ripartiti sul singolo cliente.
+        Solo le voci validate dall'operatore entrano nei totali pubblicati.
       </p>
     </>
   );
@@ -402,7 +452,9 @@ function RevenueLineItem({ entry }: { entry: Entry }) {
             )}
           </div>
         </div>
-        <span className="tabular shrink-0 text-positive">{formatSignedEur(entry.amount, true)}</span>
+        <span className="tabular shrink-0 text-positive">
+          {formatSignedEur(entry.amount, true)}
+        </span>
       </div>
     </li>
   );
@@ -426,7 +478,9 @@ function CostLineItem({ entry }: { entry: Entry }) {
             )}
           </div>
         </div>
-        <span className="tabular shrink-0 text-foreground">{formatSignedEur(-entry.amount, true)}</span>
+        <span className="tabular shrink-0 text-foreground">
+          {formatSignedEur(-entry.amount, true)}
+        </span>
       </div>
     </li>
   );
@@ -461,12 +515,24 @@ function SourceBadge({ source }: { source: Entry["source"] }) {
 
 function ConfidenceBadge({ band }: { band: ConfidenceBand }) {
   if (band === "bassa") {
-    return <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[10px] uppercase tracking-wider">Confidenza bassa</Badge>;
+    return (
+      <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[10px] uppercase tracking-wider">
+        Confidenza bassa
+      </Badge>
+    );
   }
   if (band === "media") {
-    return <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">Confidenza media</Badge>;
+    return (
+      <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+        Confidenza media
+      </Badge>
+    );
   }
-  return <Badge variant="outline" className="text-[10px] uppercase tracking-wider">Confidenza alta</Badge>;
+  return (
+    <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+      Confidenza alta
+    </Badge>
+  );
 }
 
 function ValidatorBadge({ by }: { by: "AI" | "Operatore" }) {

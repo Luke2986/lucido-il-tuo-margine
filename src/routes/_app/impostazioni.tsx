@@ -1,12 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Building2, Gauge, Database, RotateCcw, Trash2, Save, UserCog, Megaphone } from "lucide-react";
+import {
+  Building2,
+  Gauge,
+  Database,
+  RotateCcw,
+  Trash2,
+  Save,
+  UserCog,
+  Megaphone,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -17,7 +33,10 @@ export const Route = createFileRoute("/_app/impostazioni")({
   head: () => ({
     meta: [
       { title: "Impostazioni — Lucido" },
-      { name: "description", content: "Anagrafica azienda, soglie di confidenza e gestione dei dati locali." },
+      {
+        name: "description",
+        content: "Anagrafica azienda, soglie di confidenza e gestione dei dati locali.",
+      },
     ],
   }),
   component: ImpostazioniPage,
@@ -52,7 +71,10 @@ function ImpostazioniPage() {
 }
 
 function SectionCard({
-  icon: Icon, title, description, children,
+  icon: Icon,
+  title,
+  description,
+  children,
 }: {
   icon: typeof Building2;
   title: string;
@@ -184,8 +206,12 @@ function ThresholdsSection() {
   const highNum = Number(high);
   const mediumNum = Number(medium);
   const valid =
-    Number.isFinite(highNum) && Number.isFinite(mediumNum) &&
-    highNum > 0 && highNum <= 1 && mediumNum > 0 && mediumNum <= 1 &&
+    Number.isFinite(highNum) &&
+    Number.isFinite(mediumNum) &&
+    highNum > 0 &&
+    highNum <= 1 &&
+    mediumNum > 0 &&
+    mediumNum <= 1 &&
     highNum > mediumNum;
   const dirty = highNum !== thresholds.high || mediumNum !== thresholds.medium;
 
@@ -275,14 +301,17 @@ function DataSection() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Ripristinare i dati di esempio?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Tutte le voci, i clienti e l'anagrafica modificati verranno sostituiti dai dati
-                  di esempio italiani. L'operazione non è reversibile.
+                  Tutte le voci, i clienti e l'anagrafica modificati verranno sostituiti dai dati di
+                  esempio italiani. L'operazione non è reversibile.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annulla</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => { resetToSeed(); toast.success("Dati di esempio ripristinati"); }}
+                  onClick={() => {
+                    resetToSeed();
+                    toast.success("Dati di esempio ripristinati");
+                  }}
                 >
                   Ripristina
                 </AlertDialogAction>
@@ -309,7 +338,10 @@ function DataSection() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Annulla</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => { clearAll(); toast.success("Tutti i dati sono stati cancellati"); }}
+                  onClick={() => {
+                    clearAll();
+                    toast.success("Tutti i dati sono stati cancellati");
+                  }}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Cancella tutto
@@ -324,7 +356,11 @@ function DataSection() {
 }
 
 function Field({
-  id, label, hint, className, children,
+  id,
+  label,
+  hint,
+  className,
+  children,
 }: {
   id: string;
   label: string;

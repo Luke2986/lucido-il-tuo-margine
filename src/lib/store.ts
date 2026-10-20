@@ -62,7 +62,12 @@ interface LucidoState extends LucidoData {
 }
 
 const EMPTY_COMPANY: Company = {
-  name: "", vatNumber: "", sector: "", periodLabel: "", publishedAt: "", status: "bozza",
+  name: "",
+  vatNumber: "",
+  sector: "",
+  periodLabel: "",
+  publishedAt: "",
+  status: "bozza",
 };
 
 const newId = () =>
@@ -124,7 +129,9 @@ export const useLucidoStore = create<LucidoState>()(
           company: {
             ...s.company,
             status: published ? "pubblicata" : "bozza",
-            publishedAt: published ? s.company.publishedAt || new Date().toISOString().slice(0, 10) : "",
+            publishedAt: published
+              ? s.company.publishedAt || new Date().toISOString().slice(0, 10)
+              : "",
           },
         })),
 
@@ -171,7 +178,11 @@ export const useLucidoStore = create<LucidoState>()(
         const entries = get().entries;
         const idx = entries.findIndex((e) => e.id === id);
         if (idx < 0) return;
-        const copy: Entry = { ...entries[idx], id: newId(), description: `${entries[idx].description} (copia)` };
+        const copy: Entry = {
+          ...entries[idx],
+          id: newId(),
+          description: `${entries[idx].description} (copia)`,
+        };
         set({ entries: [...entries.slice(0, idx + 1), copy, ...entries.slice(idx + 1)] });
       },
 
@@ -235,9 +246,17 @@ export function computeMarginRows(clients: Client[], entries: Entry[]): MarginRo
     const relevant = [...revenues, ...variableCosts];
     const hasUnvalidated = relevant.some((e) => e.status === "da_validare");
     return {
-      clientId: c.id, name: c.name, kind: c.kind,
-      revenue, variableCosts: variable, margin, marginPct,
-      isLoss: margin < 0, hasUnvalidated, revenues, costs: variableCosts,
+      clientId: c.id,
+      name: c.name,
+      kind: c.kind,
+      revenue,
+      variableCosts: variable,
+      margin,
+      marginPct,
+      isLoss: margin < 0,
+      hasUnvalidated,
+      revenues,
+      costs: variableCosts,
     };
   });
   return rows
@@ -249,6 +268,8 @@ export function computeValidatedRevenueShare(entries: Entry[]): number {
   const revenues = entries.filter((e) => e.direction === "ricavo");
   const total = revenues.reduce((s, e) => s + e.amount, 0);
   if (total === 0) return 0;
-  const validated = revenues.filter((e) => e.status === "validato").reduce((s, e) => s + e.amount, 0);
+  const validated = revenues
+    .filter((e) => e.status === "validato")
+    .reduce((s, e) => s + e.amount, 0);
   return validated / total;
 }

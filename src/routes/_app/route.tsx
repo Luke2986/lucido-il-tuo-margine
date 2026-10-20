@@ -9,7 +9,6 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">

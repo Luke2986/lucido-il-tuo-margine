@@ -5,7 +5,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AiClassification } from "./store";
 
-const GEMINI_OPENAI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GEMINI_OPENAI_URL =
+  "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const BATCH_SIZE = 40;
 const MAX_COSTS = 200;
 const RATE_LIMIT = { requests: 10, windowMs: 60 * 60 * 1000 };
@@ -13,7 +14,13 @@ const RATE_LIMIT = { requests: 10, windowMs: 60 * 60 * 1000 };
 const inputSchema = z.object({
   company: z.object({ name: z.string().max(200), sector: z.string().max(200) }),
   clients: z
-    .array(z.object({ id: z.string().max(100), name: z.string().max(200), kind: z.enum(["cliente", "commessa"]) }))
+    .array(
+      z.object({
+        id: z.string().max(100),
+        name: z.string().max(200),
+        kind: z.enum(["cliente", "commessa"]),
+      }),
+    )
     .max(200),
   costs: z
     .array(
@@ -51,7 +58,9 @@ function checkRateLimit(key: string) {
 }
 
 function systemPrompt(company: { name: string; sector: string }) {
-  const who = company.name ? ` ("${company.name}"${company.sector ? `, settore ${company.sector}` : ""})` : "";
+  const who = company.name
+    ? ` ("${company.name}"${company.sector ? `, settore ${company.sector}` : ""})`
+    : "";
   return `Sei un assistente di controllo di gestione per una piccola SRL italiana di servizi B2B${who}.
 
 Devi classificare costi aziendali in italiano.
@@ -68,7 +77,10 @@ Restituisci confidence in [0,1] e una rationale breve in italiano che spieghi "p
 
 async function callAI(system: string, payload: unknown): Promise<unknown[]> {
   const key = process.env.AI_API_KEY;
-  if (!key) throw new Error("Classificazione AI non configurata: imposta la variabile AI_API_KEY sul server.");
+  if (!key)
+    throw new Error(
+      "Classificazione AI non configurata: imposta la variabile AI_API_KEY sul server.",
+    );
   const res = await fetch(process.env.AI_API_URL ?? GEMINI_OPENAI_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },

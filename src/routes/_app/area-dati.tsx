@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
-import {
-  Tabs, TabsContent, TabsList, TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { ClientsManager } from "@/components/data-area/ClientsManager";
@@ -20,7 +25,10 @@ export const Route = createFileRoute("/_app/area-dati")({
   head: () => ({
     meta: [
       { title: "Area dati — Lucido" },
-      { name: "description", content: "Gestione clienti, editor voci e import file. Vista operatore." },
+      {
+        name: "description",
+        content: "Gestione clienti, editor voci e import file. Vista operatore.",
+      },
     ],
   }),
   component: AreaDatiPage,
@@ -29,9 +37,6 @@ export const Route = createFileRoute("/_app/area-dati")({
 function AreaDatiPage() {
   const [tab, setTab] = useState("voci");
   const reset = useLucidoStore((s) => s.resetToSeed);
-
-
-
 
   return (
     <div className="min-h-full bg-background">
@@ -64,7 +69,12 @@ function AreaDatiPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annulla</AlertDialogCancel>
-                <AlertDialogAction onClick={() => { reset(); toast.success("Dati di esempio ripristinati"); }}>
+                <AlertDialogAction
+                  onClick={() => {
+                    reset();
+                    toast.success("Dati di esempio ripristinati");
+                  }}
+                >
                   Ripristina
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -79,10 +89,18 @@ function AreaDatiPage() {
             <TabsTrigger value="fatture">Fatture XML</TabsTrigger>
             <TabsTrigger value="import">Import Excel/CSV</TabsTrigger>
           </TabsList>
-          <TabsContent value="voci" className="mt-6"><EntriesEditor /></TabsContent>
-          <TabsContent value="clienti" className="mt-6"><ClientsManager /></TabsContent>
-          <TabsContent value="fatture" className="mt-6"><FattureXmlImportPanel /></TabsContent>
-          <TabsContent value="import" className="mt-6"><ImportPanel /></TabsContent>
+          <TabsContent value="voci" className="mt-6">
+            <EntriesEditor />
+          </TabsContent>
+          <TabsContent value="clienti" className="mt-6">
+            <ClientsManager />
+          </TabsContent>
+          <TabsContent value="fatture" className="mt-6">
+            <FattureXmlImportPanel />
+          </TabsContent>
+          <TabsContent value="import" className="mt-6">
+            <ImportPanel />
+          </TabsContent>
         </Tabs>
       </div>
     </div>

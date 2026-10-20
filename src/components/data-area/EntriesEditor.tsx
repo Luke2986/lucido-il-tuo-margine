@@ -6,13 +6,22 @@ import { Plus, Copy, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useLucidoStore } from "@/lib/store";
 import type {
-  ConfidenceBand, CostType, Entry, EntryDirection, EntrySource, ValidationStatus,
+  ConfidenceBand,
+  CostType,
+  Entry,
+  EntryDirection,
+  EntrySource,
+  ValidationStatus,
 } from "@/lib/types";
 import { formatEur, formatSignedEur } from "@/lib/format";
 
@@ -106,15 +115,22 @@ export function EntriesEditor() {
           />
         </div>
         <Select value={dirFilter} onValueChange={(v) => setDirFilter(v as typeof dirFilter)}>
-          <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-8 w-36 text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tutte le direzioni</SelectItem>
             <SelectItem value="ricavo">Solo ricavi</SelectItem>
             <SelectItem value="costo">Solo costi</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-          <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+        >
+          <SelectTrigger className="h-8 w-36 text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tutti gli stati</SelectItem>
             <SelectItem value="validato">Validate</SelectItem>
@@ -157,8 +173,14 @@ export function EntriesEditor() {
                   entry={e}
                   clients={clients}
                   onUpdate={(patch) => updateEntry(e.id, patch)}
-                  onDuplicate={() => { duplicateEntry(e.id); toast.success("Voce duplicata"); }}
-                  onRemove={() => { removeEntry(e.id); toast.success("Voce eliminata"); }}
+                  onDuplicate={() => {
+                    duplicateEntry(e.id);
+                    toast.success("Voce duplicata");
+                  }}
+                  onRemove={() => {
+                    removeEntry(e.id);
+                    toast.success("Voce eliminata");
+                  }}
                 />
               ))
             )}
@@ -174,7 +196,11 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
 }
 
 function EntryRow({
-  entry, clients, onUpdate, onDuplicate, onRemove,
+  entry,
+  clients,
+  onUpdate,
+  onDuplicate,
+  onRemove,
 }: {
   entry: Entry;
   clients: { id: string; name: string }[];
@@ -217,7 +243,9 @@ function EntryRow({
             onChange={(ev) => onUpdate({ amount: Number(ev.target.value) || 0 })}
             className="h-7 w-28 text-right text-xs tabular"
           />
-          <span className={`tabular text-[10px] ${entry.direction === "ricavo" ? "text-positive" : "text-muted-foreground"}`}>
+          <span
+            className={`tabular text-[10px] ${entry.direction === "ricavo" ? "text-positive" : "text-muted-foreground"}`}
+          >
             {formatSignedEur(entry.direction === "ricavo" ? entry.amount : -entry.amount)}
           </span>
         </div>
@@ -227,14 +255,22 @@ function EntryRow({
           value={entry.direction}
           onValueChange={(v) => {
             const direction = v as EntryDirection;
-            onUpdate(direction === "ricavo"
-              ? { direction, costType: undefined }
-              : { direction, costType: entry.costType ?? "variabile" });
+            onUpdate(
+              direction === "ricavo"
+                ? { direction, costType: undefined }
+                : { direction, costType: entry.costType ?? "variabile" },
+            );
           }}
         >
-          <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-7 w-28 text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {DIRECTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            {DIRECTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </Td>
@@ -244,9 +280,15 @@ function EntryRow({
             value={entry.costType ?? "variabile"}
             onValueChange={(v) => onUpdate({ costType: v as CostType })}
           >
-            <SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-7 w-32 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {COST_TYPES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              {COST_TYPES.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         ) : (
@@ -258,48 +300,92 @@ function EntryRow({
           value={entry.clientId ?? UNATTRIBUTED}
           onValueChange={(v) => onUpdate({ clientId: v === UNATTRIBUTED ? undefined : v })}
         >
-          <SelectTrigger className="h-7 w-44 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-7 w-44 text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={UNATTRIBUTED}>— Non attribuita</SelectItem>
-            {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            {clients.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </Td>
       <Td>
         <Select value={entry.source} onValueChange={(v) => onUpdate({ source: v as EntrySource })}>
-          <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-7 w-28 text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {SOURCES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            {SOURCES.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </Td>
       <Td>
-        <Select value={entry.confidence} onValueChange={(v) => onUpdate({ confidence: v as ConfidenceBand })}>
-          <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+        <Select
+          value={entry.confidence}
+          onValueChange={(v) => onUpdate({ confidence: v as ConfidenceBand })}
+        >
+          <SelectTrigger className="h-7 w-28 text-xs">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {CONFIDENCES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            {CONFIDENCES.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </Td>
       <Td>
         <div className="flex items-center gap-1">
-          <Select value={entry.status} onValueChange={(v) => onUpdate({ status: v as ValidationStatus })}>
-            <SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger>
+          <Select
+            value={entry.status}
+            onValueChange={(v) => onUpdate({ status: v as ValidationStatus })}
+          >
+            <SelectTrigger className="h-7 w-32 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {STATUSES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              {STATUSES.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {entry.status === "da_validare" && (
-            <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[9px]">!</Badge>
+            <Badge className="bg-warning text-warning-foreground hover:bg-warning text-[9px]">
+              !
+            </Badge>
           )}
         </div>
       </Td>
       <Td className="text-right">
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onDuplicate} title="Duplica">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={onDuplicate}
+            title="Duplica"
+          >
             <Copy className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={onRemove} title="Elimina">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+            onClick={onRemove}
+            title="Elimina"
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>

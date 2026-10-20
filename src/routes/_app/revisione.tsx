@@ -8,7 +8,11 @@ import { Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { classifyCosts } from "@/lib/classify.functions";
@@ -77,7 +81,9 @@ function RevisioneAI() {
         },
       });
       const applied = applyClassifications(items);
-      toast.success(`Classificate ${applied} voci con l'AI` + (skipped ? `, ${skipped} saltate` : "") + ".");
+      toast.success(
+        `Classificate ${applied} voci con l'AI` + (skipped ? `, ${skipped} saltate` : "") + ".",
+      );
     } catch (e) {
       toast.error(`Classificazione fallita: ${(e as Error)?.message ?? "errore"}`);
     } finally {
@@ -102,7 +108,9 @@ function RevisioneAI() {
     }
     ids.forEach((id) => updateEntry(id, { status: "validato", validatedBy: "Operatore" }));
     const skipped = selected.size - ids.length;
-    toast.success(`Confermate ${ids.length} voci` + (skipped ? `, ${skipped} senza tipo saltate` : "") + ".");
+    toast.success(
+      `Confermate ${ids.length} voci` + (skipped ? `, ${skipped} senza tipo saltate` : "") + ".",
+    );
     setSelected(new Set());
   };
 
@@ -135,7 +143,12 @@ function RevisioneAI() {
             prima di pubblicare. Nessun numero va al titolare senza la tua validazione.
           </p>
         </div>
-        <Button onClick={runClassify} disabled={running || queue.length === 0} className="shrink-0" size="sm">
+        <Button
+          onClick={runClassify}
+          disabled={running || queue.length === 0}
+          className="shrink-0"
+          size="sm"
+        >
           <Sparkles className="mr-1 h-4 w-4" />
           <span className="hidden sm:inline">{running ? "Classifico…" : "Classifica con AI"}</span>
           <span className="sm:hidden">{running ? "…" : "AI"}</span>
@@ -155,7 +168,12 @@ function RevisioneAI() {
             <p className="text-xs text-muted-foreground">
               {queue.length} voci da validare · {selected.size} selezionate
             </p>
-            <Button size="sm" variant="outline" onClick={confirmSelected} disabled={selected.size === 0}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={confirmSelected}
+              disabled={selected.size === 0}
+            >
               <Check className="mr-1 h-4 w-4" /> Conferma selezionate
             </Button>
           </div>
@@ -193,7 +211,9 @@ function RevisioneAI() {
                         {e.counterparty} · {e.date} · fonte {e.source}
                       </div>
                     </td>
-                    <td className="px-2 py-2 text-right tabular-nums whitespace-nowrap">{formatEur(e.amount)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums whitespace-nowrap">
+                      {formatEur(e.amount)}
+                    </td>
                     <td className="px-2 py-2">
                       <ConfidenceBadge band={e.confidence} />
                     </td>
@@ -285,7 +305,9 @@ function RevisioneAI() {
 
                     <div className="mt-3 grid grid-cols-1 gap-2">
                       <label className="block">
-                        <span className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">Tipo</span>
+                        <span className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Tipo
+                        </span>
                         <Select
                           value={e.costType ?? ""}
                           onValueChange={(v) => updateEntry(e.id, { costType: v as CostType })}
@@ -301,7 +323,9 @@ function RevisioneAI() {
                         </Select>
                       </label>
                       <label className="block">
-                        <span className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">Attribuzione</span>
+                        <span className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Attribuzione
+                        </span>
                         <Select
                           value={e.clientId ?? NO_CLIENT}
                           onValueChange={(v) =>
@@ -345,9 +369,10 @@ function RevisioneAI() {
           </ul>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Confermando, la voce passa a <strong>validata</strong> (validata dall'operatore) ed entra
-            nei totali del titolare. {COST_TYPE_LABEL.variabile} attribuito a un cliente incide sul
-            primo margine; {COST_TYPE_LABEL.fisso.toLowerCase()} e {COST_TYPE_LABEL.non_costo.toLowerCase()} no.
+            Confermando, la voce passa a <strong>validata</strong> (validata dall'operatore) ed
+            entra nei totali del titolare. {COST_TYPE_LABEL.variabile} attribuito a un cliente
+            incide sul primo margine; {COST_TYPE_LABEL.fisso.toLowerCase()} e{" "}
+            {COST_TYPE_LABEL.non_costo.toLowerCase()} no.
           </p>
         </>
       )}
@@ -363,7 +388,9 @@ function ConfidenceBadge({ band }: { band: string }) {
         ? "border-warning/40 bg-warning/10 text-warning"
         : "border-destructive/40 bg-destructive/10 text-destructive";
   return (
-    <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium capitalize ${cls}`}>
+    <span
+      className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium capitalize ${cls}`}
+    >
       {band}
     </span>
   );

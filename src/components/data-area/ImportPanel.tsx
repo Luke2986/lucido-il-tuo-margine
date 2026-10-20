@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useLucidoStore } from "@/lib/store";
@@ -36,8 +40,12 @@ export function ImportPanel() {
   const [columns, setColumns] = useState<string[]>([]);
   const [fileName, setFileName] = useState("");
   const [mapping, setMapping] = useState<Mapping>({
-    date: "", description: "", counterparty: "", amount: "",
-    direction: FIXED, fixedDirection: "costo",
+    date: "",
+    description: "",
+    counterparty: "",
+    amount: "",
+    direction: FIXED,
+    fixedDirection: "costo",
   });
   const [defaultClient, setDefaultClient] = useState<string>(NONE);
 
@@ -90,7 +98,11 @@ export function ImportPanel() {
     setFileName("");
   };
 
-  const reset = () => { setRows(null); setColumns([]); setFileName(""); };
+  const reset = () => {
+    setRows(null);
+    setColumns([]);
+    setFileName("");
+  };
 
   return (
     <div>
@@ -108,28 +120,69 @@ export function ImportPanel() {
           <div className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-xs">
             <span className="truncate">
               <span className="font-medium text-foreground">{fileName}</span>{" "}
-              <span className="text-muted-foreground">· {rows.length} righe · colonne: {columns.join(", ")}</span>
+              <span className="text-muted-foreground">
+                · {rows.length} righe · colonne: {columns.join(", ")}
+              </span>
             </span>
-            <Button variant="ghost" size="sm" onClick={reset}><X className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="sm" onClick={reset}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <MapField label="Data" cols={columns} value={mapping.date} onChange={(v) => setMapping({ ...mapping, date: v })} />
-            <MapField label="Descrizione" cols={columns} value={mapping.description} onChange={(v) => setMapping({ ...mapping, description: v })} />
-            <MapField label="Controparte" cols={columns} value={mapping.counterparty} onChange={(v) => setMapping({ ...mapping, counterparty: v })} optional />
-            <MapField label="Importo" cols={columns} value={mapping.amount} onChange={(v) => setMapping({ ...mapping, amount: v })} />
+            <MapField
+              label="Data"
+              cols={columns}
+              value={mapping.date}
+              onChange={(v) => setMapping({ ...mapping, date: v })}
+            />
+            <MapField
+              label="Descrizione"
+              cols={columns}
+              value={mapping.description}
+              onChange={(v) => setMapping({ ...mapping, description: v })}
+            />
+            <MapField
+              label="Controparte"
+              cols={columns}
+              value={mapping.counterparty}
+              onChange={(v) => setMapping({ ...mapping, counterparty: v })}
+              optional
+            />
+            <MapField
+              label="Importo"
+              cols={columns}
+              value={mapping.amount}
+              onChange={(v) => setMapping({ ...mapping, amount: v })}
+            />
             <div className="space-y-1.5">
               <Label className="text-xs">Direzione</Label>
-              <Select value={mapping.direction} onValueChange={(v) => setMapping({ ...mapping, direction: v })}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <Select
+                value={mapping.direction}
+                onValueChange={(v) => setMapping({ ...mapping, direction: v })}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={FIXED}>Stessa per tutte le righe</SelectItem>
-                  {columns.map((c) => <SelectItem key={c} value={c}>Da colonna: {c}</SelectItem>)}
+                  {columns.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      Da colonna: {c}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {mapping.direction === FIXED && (
-                <Select value={mapping.fixedDirection} onValueChange={(v) => setMapping({ ...mapping, fixedDirection: v as EntryDirection })}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <Select
+                  value={mapping.fixedDirection}
+                  onValueChange={(v) =>
+                    setMapping({ ...mapping, fixedDirection: v as EntryDirection })
+                  }
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="costo">Tutte costi</SelectItem>
                     <SelectItem value="ricavo">Tutte ricavi</SelectItem>
@@ -140,10 +193,16 @@ export function ImportPanel() {
             <div className="space-y-1.5">
               <Label className="text-xs">Attribuzione di default</Label>
               <Select value={defaultClient} onValueChange={setDefaultClient}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>— Non attribuita</SelectItem>
-                  {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -157,8 +216,11 @@ export function ImportPanel() {
               <table className="w-full min-w-[700px] text-xs">
                 <thead className="border-b border-border bg-secondary/40 text-[10px] uppercase text-muted-foreground">
                   <tr>
-                    <Th>Data</Th><Th>Descrizione</Th><Th>Controparte</Th>
-                    <Th className="text-right">Importo</Th><Th>Direzione</Th>
+                    <Th>Data</Th>
+                    <Th>Descrizione</Th>
+                    <Th>Controparte</Th>
+                    <Th className="text-right">Importo</Th>
+                    <Th>Direzione</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -177,14 +239,17 @@ export function ImportPanel() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={reset}>Annulla</Button>
+            <Button variant="outline" onClick={reset}>
+              Annulla
+            </Button>
             <Button onClick={handleImport} disabled={!canImport}>
               <Check className="mr-1 h-4 w-4" /> Importa {rows.length} righe
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Le voci importate avranno stato <strong>Da validare</strong>, fonte <strong>Excel</strong>,
-            confidenza <strong>Media</strong>. Sono tutte modificabili nell'editor.
+            Le voci importate avranno stato <strong>Da validare</strong>, fonte{" "}
+            <strong>Excel</strong>, confidenza <strong>Media</strong>. Sono tutte modificabili
+            nell'editor.
           </p>
         </div>
       )}
@@ -213,9 +278,17 @@ function FileDrop({ onFile }: { onFile: (f: File) => void }) {
 }
 
 function MapField({
-  label, cols, value, onChange, optional = false,
+  label,
+  cols,
+  value,
+  onChange,
+  optional = false,
 }: {
-  label: string; cols: string[]; value: string; onChange: (v: string) => void; optional?: boolean;
+  label: string;
+  cols: string[];
+  value: string;
+  onChange: (v: string) => void;
+  optional?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
@@ -223,10 +296,16 @@ function MapField({
         {label} {optional && <span className="text-muted-foreground">(opzionale)</span>}
       </Label>
       <Select value={value || NONE} onValueChange={(v) => onChange(v === NONE ? "" : v)}>
-        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="— Seleziona colonna" /></SelectTrigger>
+        <SelectTrigger className="h-8 text-xs">
+          <SelectValue placeholder="— Seleziona colonna" />
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>— Nessuna</SelectItem>
-          {cols.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          {cols.map((c) => (
+            <SelectItem key={c} value={c}>
+              {c}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>
@@ -261,9 +340,7 @@ function buildEntry(row: Row, m: Mapping, defaultClient: string): Omit<Entry, "i
   const counterparty = m.counterparty ? String(row[m.counterparty] ?? "").trim() : "";
   const amount = Math.abs(parseAmount(row[m.amount]));
   const direction: EntryDirection =
-    m.direction === FIXED
-      ? m.fixedDirection
-      : inferDirection(row[m.direction], m.fixedDirection);
+    m.direction === FIXED ? m.fixedDirection : inferDirection(row[m.direction], m.fixedDirection);
   return {
     date,
     description: description || "(senza descrizione)",
@@ -307,19 +384,25 @@ function isoDate(y: number, m: number, d: number): string | null {
 
 function parseAmount(v: unknown): number {
   if (typeof v === "number") return v;
-  let s = String(v ?? "").trim().replace(/[^\d,.-]/g, "");
+  let s = String(v ?? "")
+    .trim()
+    .replace(/[^\d,.-]/g, "");
   if (!s) return 0;
   const lastComma = s.lastIndexOf(",");
   const lastDot = s.lastIndexOf(".");
-  if (lastComma > lastDot) s = s.replace(/\./g, "").replace(",", "."); // 1.234,56
-  else if (lastComma >= 0) s = s.replace(/,/g, ""); // 1,234.56
+  if (lastComma > lastDot)
+    s = s.replace(/\./g, "").replace(",", "."); // 1.234,56
+  else if (lastComma >= 0)
+    s = s.replace(/,/g, ""); // 1,234.56
   else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ""); // 1.234 (migliaia)
   const n = Number(s);
   return isNaN(n) ? 0 : n;
 }
 
 function inferDirection(v: unknown, fallback: EntryDirection): EntryDirection {
-  const s = String(v ?? "").toLowerCase().trim();
+  const s = String(v ?? "")
+    .toLowerCase()
+    .trim();
   if (["ricavo", "ricavi", "entrata", "credito", "incasso", "+"].includes(s)) return "ricavo";
   if (["costo", "costi", "uscita", "debito", "pagamento", "-"].includes(s)) return "costo";
   const n = Number(s);

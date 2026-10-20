@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -32,7 +36,10 @@ interface ParsedRow {
   include: boolean;
 }
 
-interface Skipped { fileName: string; reason: string; }
+interface Skipped {
+  fileName: string;
+  reason: string;
+}
 
 export function FattureXmlImportPanel() {
   const addEntries = useLucidoStore((s) => s.addEntries);
@@ -45,10 +52,7 @@ export function FattureXmlImportPanel() {
   const [overrideDirection, setOverrideDirection] = useState<EntryDirection>("costo");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const needsOverride = useMemo(
-    () => rows.some((r) => !r.detectedFromVat),
-    [rows],
-  );
+  const needsOverride = useMemo(() => rows.some((r) => !r.detectedFromVat), [rows]);
   const undecidedCount = rows.filter((r) => r.direction === null).length;
 
   const handleFiles = async (files: FileList | null) => {
@@ -162,15 +166,18 @@ export function FattureXmlImportPanel() {
   };
 
   const includedCount = rows.filter((r) => r.include).length;
-  const canImport = includedCount > 0 && (!needsOverride || undecidedCount === 0 || overrideDirection);
+  const canImport =
+    includedCount > 0 && (!needsOverride || undecidedCount === 0 || overrideDirection);
 
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-base font-semibold tracking-tight">Importa fatture elettroniche (FatturaPA XML)</h2>
+        <h2 className="text-base font-semibold tracking-tight">
+          Importa fatture elettroniche (FatturaPA XML)
+        </h2>
         <p className="text-xs text-muted-foreground">
-          Carica uno o più file .xml. Direzione (ricavo/costo) rilevata automaticamente dalla P.IVA azienda.
-          Le voci restano modificabili nell'editor.
+          Carica uno o più file .xml. Direzione (ricavo/costo) rilevata automaticamente dalla P.IVA
+          azienda. Le voci restano modificabili nell'editor.
         </p>
       </div>
 
@@ -185,7 +192,9 @@ export function FattureXmlImportPanel() {
               </div>
               <ul className="space-y-0.5 text-muted-foreground">
                 {skipped.map((s, i) => (
-                  <li key={i}><span className="font-medium text-foreground">{s.fileName}</span> — {s.reason}</li>
+                  <li key={i}>
+                    <span className="font-medium text-foreground">{s.fileName}</span> — {s.reason}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -197,7 +206,8 @@ export function FattureXmlImportPanel() {
                 <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 text-warning" />
                   <span>
-                    P.IVA azienda non impostata in Impostazioni. Imposta direzione e controparte a mano qui sotto.
+                    P.IVA azienda non impostata in Impostazioni. Imposta direzione e controparte a
+                    mano qui sotto.
                   </span>
                 </div>
               )}
@@ -207,8 +217,13 @@ export function FattureXmlImportPanel() {
                   <div className="mb-1.5 text-xs font-medium">
                     {undecidedCount} fatture senza direzione rilevata — scegli:
                   </div>
-                  <Select value={overrideDirection} onValueChange={(v) => setOverrideDirection(v as EntryDirection)}>
-                    <SelectTrigger className="h-8 w-64 text-xs"><SelectValue /></SelectTrigger>
+                  <Select
+                    value={overrideDirection}
+                    onValueChange={(v) => setOverrideDirection(v as EntryDirection)}
+                  >
+                    <SelectTrigger className="h-8 w-64 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ricavo">Attive (ricavi)</SelectItem>
                       <SelectItem value="costo">Passive (costi)</SelectItem>
@@ -269,17 +284,25 @@ export function FattureXmlImportPanel() {
                               type="number"
                               step="0.01"
                               value={r.amount}
-                              onChange={(e) => updateRow(r.uid, { amount: Number(e.target.value) || 0 })}
+                              onChange={(e) =>
+                                updateRow(r.uid, { amount: Number(e.target.value) || 0 })
+                              }
                               className="h-7 w-28 text-right text-xs"
                             />
-                            <div className="text-[10px] text-muted-foreground">{formatEur(Math.abs(r.amount))}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {formatEur(Math.abs(r.amount))}
+                            </div>
                           </Td>
                           <Td>
                             <Select
                               value={dir}
-                              onValueChange={(v) => updateRow(r.uid, { direction: v as EntryDirection })}
+                              onValueChange={(v) =>
+                                updateRow(r.uid, { direction: v as EntryDirection })
+                              }
                             >
-                              <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-7 w-28 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="ricavo">Ricavo</SelectItem>
                                 <SelectItem value="costo">Costo</SelectItem>
@@ -289,7 +312,9 @@ export function FattureXmlImportPanel() {
                               <div className="text-[10px] text-warning">manuale</div>
                             )}
                             {r.isCreditNote && (
-                              <div className="text-[10px] text-warning">nota credito (importo negativo)</div>
+                              <div className="text-[10px] text-warning">
+                                nota credito (importo negativo)
+                              </div>
                             )}
                           </Td>
                           <Td>
@@ -299,10 +324,14 @@ export function FattureXmlImportPanel() {
                                   value={r.clientId}
                                   onValueChange={(v) => updateRow(r.uid, { clientId: v })}
                                 >
-                                  <SelectTrigger className="h-7 w-40 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectTrigger className="h-7 w-40 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
                                   <SelectContent>
                                     {clients.map((c) => (
-                                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                      </SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
@@ -338,7 +367,9 @@ export function FattureXmlImportPanel() {
                   {includedCount} di {rows.length} fatture selezionate.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={reset}>Annulla</Button>
+                  <Button variant="outline" onClick={reset}>
+                    Annulla
+                  </Button>
                   <Button onClick={handleImport} disabled={!canImport}>
                     <Check className="mr-1 h-4 w-4" /> Conferma import ({includedCount})
                   </Button>
@@ -346,13 +377,16 @@ export function FattureXmlImportPanel() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Le voci avranno fonte <strong>Fattura</strong>, stato <strong>Da validare</strong>,
-                confidenza <strong>Bassa</strong>. La classificazione fisso/variabile va fatta nell'editor.
+                confidenza <strong>Bassa</strong>. La classificazione fisso/variabile va fatta
+                nell'editor.
               </p>
             </>
           )}
 
           {rows.length === 0 && skipped.length > 0 && (
-            <Button variant="outline" onClick={reset}>Riprova</Button>
+            <Button variant="outline" onClick={reset}>
+              Riprova
+            </Button>
           )}
         </div>
       )}
@@ -363,7 +397,8 @@ export function FattureXmlImportPanel() {
 // ---------- UI helpers ----------
 
 function FileDrop({
-  inputRef, onFiles,
+  inputRef,
+  onFiles,
 }: {
   inputRef: React.RefObject<HTMLInputElement | null>;
   onFiles: (files: FileList | null) => void;

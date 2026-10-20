@@ -26,8 +26,20 @@ type NavItem = {
 const allItems: NavItem[] = [
   { title: "Margine clienti", url: "/", icon: LineChart, enabled: true, group: "Titolare" },
   { title: "Area dati", url: "/area-dati", icon: Database, enabled: true, group: "Operatore" },
-  { title: "Revisione AI", url: "/revisione", icon: ShieldCheck, enabled: true, group: "Operatore" },
-  { title: "Impostazioni", url: "/impostazioni", icon: Settings, enabled: true, group: "Operatore" },
+  {
+    title: "Revisione AI",
+    url: "/revisione",
+    icon: ShieldCheck,
+    enabled: true,
+    group: "Operatore",
+  },
+  {
+    title: "Impostazioni",
+    url: "/impostazioni",
+    icon: Settings,
+    enabled: true,
+    group: "Operatore",
+  },
 ];
 
 export function AppSidebar() {
@@ -42,9 +54,7 @@ export function AppSidebar() {
   };
 
   // Il titolare vede solo la schermata margine.
-  const items = role === "owner"
-    ? allItems.filter((i) => i.group === "Titolare")
-    : allItems;
+  const items = role === "owner" ? allItems.filter((i) => i.group === "Titolare") : allItems;
   const groups = role === "owner" ? ["Titolare"] : ["Titolare", "Operatore"];
 
   const roleLabel = role === "owner" ? "Titolare" : role === "operator" ? "Operatore" : "—";
@@ -56,7 +66,9 @@ export function AppSidebar() {
           <BrandMark />
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight text-foreground">Lucido</p>
+              <p className="truncate text-sm font-semibold tracking-tight text-foreground">
+                Lucido
+              </p>
               <p className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
                 Controllo di gestione
               </p>
@@ -71,40 +83,46 @@ export function AppSidebar() {
             {!collapsed && <SidebarGroupLabel>{g}</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.filter((i) => i.group === g).map((item) => {
-                  const isActive = currentPath === item.url;
-                  const Icon = item.icon;
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild={item.enabled}
-                        isActive={isActive}
-                        disabled={!item.enabled}
-                        tooltip={item.title}
-                        className={item.enabled ? "" : "opacity-50 cursor-not-allowed"}
-                      >
-                        {item.enabled ? (
-                          <Link to={item.url} onClick={handleNavClick} className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            {(!collapsed || isMobile) && <span>{item.title}</span>}
-                          </Link>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            {!collapsed && (
-                              <span className="flex-1">
-                                {item.title}
-                                <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                                  presto
+                {items
+                  .filter((i) => i.group === g)
+                  .map((item) => {
+                    const isActive = currentPath === item.url;
+                    const Icon = item.icon;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild={item.enabled}
+                          isActive={isActive}
+                          disabled={!item.enabled}
+                          tooltip={item.title}
+                          className={item.enabled ? "" : "opacity-50 cursor-not-allowed"}
+                        >
+                          {item.enabled ? (
+                            <Link
+                              to={item.url}
+                              onClick={handleNavClick}
+                              className="flex items-center gap-2"
+                            >
+                              <Icon className="h-4 w-4" />
+                              {(!collapsed || isMobile) && <span>{item.title}</span>}
+                            </Link>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              {!collapsed && (
+                                <span className="flex-1">
+                                  {item.title}
+                                  <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                    presto
+                                  </span>
                                 </span>
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                              )}
+                            </div>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -114,7 +132,9 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-border">
         {!collapsed ? (
           <div className="px-2 py-2">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Accesso come</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Accesso come
+            </p>
             <p className="mt-0.5 truncate text-xs font-medium text-foreground">{roleLabel}</p>
             <p className="truncate text-xs text-muted-foreground">
               {company.name || "Nessuna azienda"}

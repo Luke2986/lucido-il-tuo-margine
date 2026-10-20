@@ -76,16 +76,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Lucido — Quali clienti ti fanno guadagnare" },
-      { name: "description", content: "Cruscotto di controllo di gestione per micro e piccole SRL italiane. Primo margine per cliente e commessa, spiegato." },
+      {
+        name: "description",
+        content:
+          "Cruscotto di controllo di gestione per micro e piccole SRL italiane. Primo margine per cliente e commessa, spiegato.",
+      },
       { property: "og:title", content: "Lucido — Quali clienti ti fanno guadagnare" },
-      { property: "og:description", content: "La verità in avanti sui tuoi numeri. Primo margine per cliente, spiegato." },
+      {
+        property: "og:description",
+        content: "La verità in avanti sui tuoi numeri. Primo margine per cliente, spiegato.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
     ],
   }),
